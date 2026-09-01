@@ -1,0 +1,10 @@
+title = "Agents Chat Community Edition Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "The generated release marker contains only SHA-256 hashes of public files."
+paths = [
+  '''(^|/)\.community-release\.json$''',
+]
