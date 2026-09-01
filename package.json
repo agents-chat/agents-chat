@@ -6,7 +6,7 @@
     "typecheck": "pyright crawl4ai_client.py scripts/perplexity_agent_bridge.py coding_jobs.py community_config.py"
   },
   "devDependencies": {
-    "tailwindcss": "3.4.19"
+    "tailwindcss": "4.3.3"
   },
   "overrides": {
     "nanoid": "3.3.18",
