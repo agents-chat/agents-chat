@@ -1,0 +1,18 @@
+{
+  "packageManager": "npm@11.6.2",
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i static/src/tailwind.css -o static/app.css --minify",
+    "test": "node --test tests/*.mjs",
+    "typecheck": "pyright crawl4ai_client.py scripts/perplexity_agent_bridge.py coding_jobs.py community_config.py"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.19"
+  },
+  "overrides": {
+    "nanoid": "3.3.18",
+    "postcss": "8.5.26"
+  },
+  "dependencies": {
+    "pyright": "^1.1.413"
+  }
+}

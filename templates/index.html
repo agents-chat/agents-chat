@@ -1,0 +1,1568 @@
+<!doctype html>
+{% set page_public_config = public_config | default({}) %}
+<html lang="en" class="dark"
+  data-agent-chat-edition="{{ 'community' if page_public_config.get('community', false) else 'private' }}"
+  data-github-repo-url="{{ page_public_config.get('github_repo_url', '') | e }}"
+  data-app-version="{{ page_public_config.get('app_version', '') | e }}"
+  data-app-runtime="/static/app-runtime.js?v={{ page_public_config.get('runtime_version', page_public_config.get('app_version', '')) }}"
+  data-hearth-href="/static/hearth.css?v={{ page_public_config.get('app_version', '') }}-22">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" id="themeColorMeta" content="#0a0b10" />
+<script src="/static/shell-bootstrap.js?v={{ page_public_config.get('bootstrap_version', page_public_config.get('app_version', '')) }}"></script>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Agents Chat" />
+<title>AGENTS CHAT v0.1.0-beta.1 · NEURO-BLEND</title>
+
+<!-- Favicons / home-screen icons. iOS ignores SVG for apple-touch-icon, so we
+     ship real PNGs (180px for iOS, 32/16 for browser tabs) plus a multi-res .ico.
+     The SVG icon is kept as a progressive enhancement for modern desktop browsers. -->
+<link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v=2" />
+<link rel="icon" type="image/png" sizes="32x32" href="/static/agent-chat-32.png?v=2" />
+<link rel="icon" type="image/png" sizes="16x16" href="/static/agent-chat-16.png?v=2" />
+<link rel="shortcut icon" href="/static/favicon.ico?v=2" />
+<link rel="apple-touch-icon" sizes="180x180" href="/static/agent-chat-180.png?v=2" />
+<link rel="apple-touch-icon" sizes="167x167" href="/static/agent-chat-167.png?v=2" />
+<link rel="apple-touch-icon" sizes="152x152" href="/static/agent-chat-152.png?v=2" />
+<link rel="manifest" href="/manifest.webmanifest" />
+
+<link rel="stylesheet" href="/static/app.css?v=v0.1.0-beta.1" />
+<link rel="stylesheet" href="/static/fonts/fonts.css?v={{ page_public_config.get('app_version', '') }}" />
+<link rel="stylesheet" href="/static/app-shell.css?v={{ page_public_config.get('style_version', page_public_config.get('app_version', '')) }}" />
+<!-- marked / purify / lucide / sortable load after sign-in (see loadAppVendors). -->
+
+
+</head>
+
+<body class="bg-obsidian text-[var(--text)]">
+<!-- Screen-reader live regions: the chat log itself carries no aria-live, so
+     turn progress and replies were silent to assistive tech. announce() feeds
+     these concise summaries (polite for status, assertive for HOLD/ASK). -->
+<div id="a11yLive" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="a11yAlert" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+<div id="loginScreen" class="fixed inset-0 hidden px-4" role="dialog" aria-modal="true" aria-labelledby="loginTitle" aria-hidden="true" style="z-index:200;">
+  <div class="login-orb one" aria-hidden="true"></div><div class="login-orb two" aria-hidden="true"></div>
+  <svg class="login-watermark" aria-hidden="true" viewBox="0 0 240 160"><path d="M86 34 L30 80 L86 126" fill="none" stroke="#f3f0e8" stroke-width="16"/><path d="M154 34 L210 80 L154 126" fill="none" stroke="#f3f0e8" stroke-width="16"/><circle cx="104" cy="64" r="11" fill="#f3f0e8"/><circle cx="136" cy="64" r="11" fill="#f3f0e8"/><circle cx="104" cy="96" r="11" fill="#f3f0e8"/><circle cx="136" cy="96" r="11" fill="#33c374"/></svg>
+  <div class="login-spot" aria-hidden="true"></div>
+  <div class="login-vignette" aria-hidden="true"></div>
+  <div class="login-topline" aria-hidden="true"></div>
+  <div class="login-shell">
+    <section class="login-story" aria-label="About Agents Chat">
+      <div class="login-brand login-rev d1">
+        <svg class="login-brand-svg" aria-hidden="true" width="46" height="31" viewBox="0 0 240 160">
+          <path d="M86 34 L30 80 L86 126" fill="none" stroke="#f3f0e8" stroke-width="16"/>
+          <path d="M154 34 L210 80 L154 126" fill="none" stroke="#f3f0e8" stroke-width="16"/>
+          <circle class="ldot n1" cx="104" cy="64" r="11" fill="#f3f0e8"/>
+          <circle class="ldot n2" cx="136" cy="64" r="11" fill="#f3f0e8"/>
+          <circle class="ldot n3" cx="104" cy="96" r="11" fill="#f3f0e8"/>
+          <circle class="ldot n4" cx="136" cy="96" r="11" fill="#33c374"/>
+          <circle class="ping" cx="136" cy="96" r="11" fill="none" stroke="#33c374" stroke-width="3"/>
+        </svg>
+        <div><div class="login-brand-name">AGENTS CHAT</div><div class="login-brand-edition"><span data-login-edition="community">Community Edition · Local-first</span><span data-login-edition="private">Private · Local-first</span></div></div>
+      </div>
+      <div class="login-kicker login-rev d2">Private · Local · Yours</div>
+      <h2 class="login-rev d3">Your team is <span class="login-serif">waiting.</span></h2>
+      <p class="login-story-copy login-rev d4">Agents, files, decisions, and automations — together on this computer, ready to pick up where you left off.</p>
+      <div class="login-rule login-rev d5" aria-hidden="true"></div>
+      <div class="login-assure login-rev d5" aria-label="Assurances">
+        <div><i>✓</i> Runs entirely on your computer</div>
+        <div><i>✓</i> No cloud account required</div>
+        <div><i>✓</i> MIT-licensed and open source</div>
+      </div>
+    </section>
+    <div class="login-card-shell">
+    <div class="login-halo" aria-hidden="true"></div>
+    <form id="loginForm" class="login-panel" autocomplete="on">
+      <div id="loginModeBadge" class="login-mode-badge">Secure local access</div>
+      <h1 id="loginTitle">Welcome to Agents Chat.</h1>
+      <p id="loginIntro" class="login-intro">Preparing your private sign-in…</p>
+      <div id="loginSetupNote" class="login-setup-note hidden"><span aria-hidden="true">✦</span><span>No temporary password and nothing to hunt down. Choose your password here and Agents Chat will securely finish setup.</span></div>
+      <div id="loginNameGroup" class="login-field hidden">
+        <label for="loginDisplayName">Your name <span>Shown in your chats</span></label>
+        <input id="loginDisplayName" name="display-name" type="text" autocomplete="name" class="login-control" maxlength="80" placeholder="e.g. Alex Morgan">
+      </div>
+      <div class="login-field">
+        <label for="loginEmail"><span id="loginIdentifierLabel">Username or email</span> <span id="loginEmailHint">Your account</span></label>
+        <input id="loginEmail" name="identifier" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required class="login-control" placeholder="Your username or email">
+      </div>
+      <div class="login-field">
+        <label for="loginPassword"><span id="loginPasswordLabel" style="color:inherit;font-weight:inherit">Password</span><span id="loginPasswordRequirement"></span></label>
+        <div class="login-control-wrap">
+          <input id="loginPassword" name="password" type="password" autocomplete="current-password" data-lpignore="true" data-1p-ignore="true" required class="login-control" placeholder="Enter your password">
+          <button type="button" class="login-password-toggle" data-login-password-toggle aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+        <p id="loginPasswordHint" class="login-password-hint hidden">Use at least 12 characters. A short phrase is strong and easy to remember.</p>
+      </div>
+      <div id="loginConfirmGroup" class="login-field hidden">
+        <label for="loginPasswordConfirm">Confirm password <span>One more time</span></label>
+        <div class="login-control-wrap">
+          <input id="loginPasswordConfirm" name="password-confirm" type="password" autocomplete="new-password" data-lpignore="true" data-1p-ignore="true" class="login-control" placeholder="Repeat your password">
+          <button type="button" class="login-password-toggle" data-login-password-toggle="confirm" aria-label="Show confirmation password" aria-pressed="false">Show</button>
+        </div>
+      </div>
+      <button type="submit" id="loginSubmit" class="login-submit" disabled><span id="loginSubmitText">Getting things ready…</span><kbd class="login-kbd" aria-hidden="true">↵</kbd></button>
+      <div id="loginError" class="login-error" role="alert" aria-live="polite"></div>
+      <div class="login-panel-footer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Your sign-in stays on this computer</div>
+    </form>
+    </div>
+  </div>
+</div>
+
+<div id="idleLockScreen" class="fixed inset-0 hidden flex items-center justify-center px-4" role="dialog" aria-modal="true" aria-labelledby="idleLockTitle" aria-hidden="true">
+  <form id="idleLockForm" class="idle-lock-card" autocomplete="on">
+    <div class="idle-lock-kicker">Away lock</div>
+    <h1 id="idleLockTitle">Still you?</h1>
+    <p class="idle-lock-copy">Agents keep running. Enter your password to come back to this screen.</p>
+    <div class="login-field">
+      <label for="idleLockPassword">Password</label>
+      <div class="login-control-wrap">
+        <input id="idleLockPassword" name="idle-lock-password" type="password" autocomplete="current-password" data-lpignore="true" data-1p-ignore="true" required class="login-control" placeholder="Enter your password">
+      </div>
+    </div>
+    <button type="submit" id="idleLockSubmit" class="login-submit"><span>Unlock</span></button>
+    <div id="idleLockError" class="login-error" role="alert" aria-live="polite"></div>
+    <div class="login-panel-footer">
+      <button type="button" id="idleLockSignOut" class="text-xs underline decoration-white/30 hover:decoration-white">Sign out instead</button>
+    </div>
+  </form>
+</div>
+<div id="idleWarnBanner" class="fixed hidden rounded-lg px-3 py-2.5 flex items-center gap-3" role="status" aria-live="polite">
+  <div class="min-w-0 text-sm leading-snug">Screen locks in about two minutes if nothing happens.</div>
+  <button type="button" id="idleWarnStay" class="brand-cta h-8 px-3 rounded-md text-xs font-semibold shrink-0">Still here</button>
+</div>
+<!-- First-run onboarding (Phase 1) — full-screen guided welcome. Body rendered by JS. -->
+
+<div id="onboardingOverlay" class="fixed inset-0 hidden" data-modal-root aria-hidden="true" inert aria-label="Welcome to Agents Chat" style="z-index:150; background:rgba(7,10,8,0.97); backdrop-filter:blur(8px);">
+  <button type="button" id="onboardingBack" hidden aria-label="Go back in setup" class="onb-secondary inline-flex items-center gap-1.5 h-10 px-3 rounded-md text-sm" style="position:fixed;width:auto;z-index:2;top:max(1rem,env(safe-area-inset-top));left:max(1rem,env(safe-area-inset-left));background:rgba(18,22,27,.9);border:1px solid rgba(255,255,255,.12);">
+    <i data-lucide="arrow-left" class="w-4 h-4" aria-hidden="true"></i><span>Back</span>
+  </button>
+  <div id="onbZip" class="onb-zip" hidden>
+    <div class="onb-zip-label"></div>
+    <div class="onb-zip-track"><i></i></div>
+    <div id="onbZipErr" class="onb-zip-err" hidden></div>
+  </div>
+  <div id="onboardingBody" class="h-full w-full overflow-y-auto flex items-center justify-center px-4 pb-4" style="padding-top:max(4.5rem,calc(env(safe-area-inset-top) + 3.5rem));"></div>
+</div>
+
+<!-- Mobile nav sheet (left) -->
+<div id="navSheet" class="fixed inset-0 z-50 hidden md:!hidden">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="sheet-enter sheet-surface relative h-full w-[260px] max-w-[85vw] border-r flex flex-col overflow-hidden">
+    <div class="p-4 border-b border-[var(--border)] flex items-center">
+      <button type="button" id="productGuideNavBtn" class="nb-lockup lg" aria-label="Ask about Agents Chat">
+        <span class="e-mark md" aria-hidden="true"></span>
+        <span class="nb-stack">
+          <span class="nb-word">AGENTS CHAT</span>
+          <span class="nb-engine">- NEURO-BLEND ENGINE<span class="nb-on" aria-hidden="true"></span></span>
+        </span>
+      </button>
+    </div>
+    <div class="p-3 flex-1 min-h-0 flex flex-col gap-1 mobile-sheet-scroll primary-nav-scroll">
+      <!-- Navigation follows the work: workspace → context → automation → admin. -->
+      <details class="nav-disclosure mobile-nav-disclosure" data-nav-section="chat" open>
+      <summary class="nav-disclosure-summary" title="Show or hide This chat"><span>This chat</span><i data-lucide="chevron-down" aria-hidden="true"></i></summary>
+      <div class="nav-disclosure-body">
+      <button data-view="chat" class="w-full px-3 py-3 rounded-md flex items-center gap-3 bg-gold/10 text-gold text-left">
+        <i data-lucide="message-square" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Chat</span>
+      </button>
+      <!-- SIMPLE MODE HELD (see simple-ui/REBUILD_SPEC.md): the surface is unfinished, so it
+           is deliberately unlinked from every nav entry point. /simple still serves for
+           development. Restore this link only when the rebuild ships. -->
+
+      <button data-view="files" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="folder" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Files</span>
+      </button>
+      <button id="canvasNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="layout-grid" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Chat Canvas</span>
+      </button>
+      <button id="missionMapNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="git-branch" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Mission Map</span>
+      </button>
+      <button id="workspaceNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="boxes" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Workspace &amp; agents</span>
+      </button>
+      </div>
+      </details>
+      <details class="nav-disclosure mobile-nav-disclosure" data-nav-section="work" open>
+      <summary class="nav-disclosure-summary" title="Show or hide Your work"><span>Your work</span><i data-lucide="chevron-down" aria-hidden="true"></i></summary>
+      <div class="nav-disclosure-body">
+      <button data-view="projects" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="briefcase" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Projects</span>
+      </button>
+      <button data-view="calendar" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="calendar-days" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Calendar</span>
+      </button>
+      <button id="atlasNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="compass" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Chat Atlas</span>
+      </button>
+      <button id="decisionsNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="gavel" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Team Memory</span>
+      </button>
+      </div>
+      </details>
+      <details class="nav-disclosure mobile-nav-disclosure" data-nav-section="automation">
+      <summary class="nav-disclosure-summary" title="Show or hide Automation"><span>Automation</span><i data-lucide="chevron-down" aria-hidden="true"></i></summary>
+      <div class="nav-disclosure-body">
+      <button id="missionNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="radar" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">LOOPS</span>
+      </button>
+      <button id="skillsNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="wand-2" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Skills</span>
+      </button>
+      <button id="controlRoomNavBtn" class="hidden w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="layout-dashboard" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Control Room</span>
+      </button>
+      </div>
+      </details>
+      <details class="nav-disclosure mobile-nav-disclosure" data-nav-section="connected">
+      <summary class="nav-disclosure-summary" title="Show or hide Connected"><span>Connected</span><i data-lucide="chevron-down" aria-hidden="true"></i></summary>
+      <div class="nav-disclosure-body">
+      <button id="mailboxesNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="mail" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Mailboxes</span>
+      </button>
+      <button id="secretsNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="key-round" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Secrets</span>
+      </button>
+      </div>
+      </details>
+      <details class="nav-disclosure mobile-nav-disclosure" data-nav-section="app">
+      <summary class="nav-disclosure-summary" title="Show or hide App and support"><span>App &amp; support</span><i data-lucide="chevron-down" aria-hidden="true"></i></summary>
+      <div class="nav-disclosure-body">
+      <button id="usageNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="gauge" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Usage &amp; cost</span>
+      </button>
+      <button data-view="settings" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="settings" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Settings</span>
+      </button>
+      <button id="themeNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="sun-moon" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Theme: <span id="themeNavLabel">Dark</span></span>
+      </button>
+      <button id="whatsNewNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="sparkles" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">What's new</span>
+      </button>
+      <button id="supportNavBtn" class="w-full px-3 py-3 rounded-md flex items-center gap-3 text-[var(--text)] hover:bg-white/5 text-left">
+        <i data-lucide="message-square-warning" class="w-[18px] h-[18px]"></i><span class="text-sm font-medium">Report a problem</span>
+      </button>
+      </div>
+      </details>
+    </div>
+    <div class="mt-auto p-3 border-t border-[var(--border)] flex items-center justify-between gap-3 text-xs text-[var(--text-dim)]">
+      <div class="min-w-0 flex items-center gap-2">
+        <span id="mNavStatusDot" class="inline-block w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+        <span id="mNavStatusLabel" class="truncate">Connecting…</span>
+      </div>
+      <button id="logoutNavBtn" title="Sign out" aria-label="Sign out"
+        class="hidden h-10 w-10 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)] transition-colors shrink-0">
+        <i data-lucide="log-out" class="w-[18px] h-[18px]"></i>
+      </button>
+    </div>
+  </aside>
+</div>
+
+<!-- Mobile threads sheet -->
+<div id="threadsSheet" class="mobile-nav-sheet fixed inset-0 z-50 hidden">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="sheet-enter sheet-surface relative h-full w-[340px] max-w-[92vw] border-r flex flex-col overflow-hidden">
+    <div id="mThreadsMount" class="flex-1 min-h-0 flex flex-col"></div>
+  </aside>
+</div>
+
+<!-- Shared desktop dialog / touch bottom sheet for assigning conversations. -->
+<div id="projectDialog" class="project-dialog-overlay hidden" aria-hidden="true">
+  <div data-action="close-project-dialog" class="absolute inset-0" aria-hidden="true"></div>
+  <section class="project-dialog-card relative" role="dialog" aria-modal="true" aria-labelledby="projectDialogTitle" aria-describedby="projectDialogDescription">
+    <div id="projectDialogMount" class="min-h-0 flex flex-col"></div>
+  </section>
+</div>
+
+<!-- A project can organize both ordinary conversations and coding work. -->
+<div id="newChatChoiceDialog" class="project-dialog-overlay hidden" aria-hidden="true">
+  <div data-action="close-new-chat-choice" class="absolute inset-0" aria-hidden="true"></div>
+  <section class="project-dialog-card new-chat-choice-card relative" role="dialog" aria-modal="true" aria-labelledby="newChatChoiceTitle" aria-describedby="newChatChoiceDescription">
+    <div id="newChatChoiceMount" class="min-h-0 flex flex-col"></div>
+  </section>
+</div>
+
+<!-- Activity / Projects detail popout from the sidebar section headers. -->
+<div id="directoryInspect" class="directory-inspect-overlay hidden" aria-hidden="true" tabindex="-1">
+  <div data-action="close-directory-inspect" class="absolute inset-0" aria-hidden="true"></div>
+  <section class="directory-inspect-card relative" role="dialog" aria-modal="true" aria-labelledby="directoryInspectTitle" aria-describedby="directoryInspectDescription">
+    <div id="directoryInspectMount" class="min-h-0 flex flex-col"></div>
+  </section>
+</div>
+
+<!-- Mobile agents sheet -->
+<div id="agentsSheet" class="mobile-nav-sheet fixed inset-0 z-50 hidden">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="sheet-enter-bottom sheet-surface absolute inset-x-0 bottom-0 max-h-[82dvh] rounded-t-2xl border-t shadow-2xl flex flex-col overflow-hidden">
+    <div id="mAgentsMount" class="flex-1 min-h-0 flex flex-col"></div>
+  </aside>
+</div>
+
+<!-- Mobile message actions sheet -->
+<div id="messageActionsSheet" class="fixed inset-0 z-50 hidden md:!hidden">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="sheet-enter-bottom sheet-surface mobile-action-sheet absolute inset-x-0 bottom-0 rounded-t-2xl border-t shadow-2xl overflow-hidden">
+    <div class="px-4 pt-3 pb-2 flex justify-center">
+      <span class="sheet-handle" aria-hidden="true"></span>
+    </div>
+    <div class="px-4 pb-3 border-b border-[var(--border)] flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <div id="mActionTitle" class="text-sm font-semibold truncate">Message</div>
+        <div id="mActionMeta" class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] truncate"></div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close message actions">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="mActionsMount" class="p-3 grid grid-cols-2 gap-2"></div>
+  </aside>
+</div>
+
+<!-- Responsive composer settings (mode + agents) dialog -->
+<div id="composerSettingsSheet" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="composerSettingsTitle">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="composer-settings-dialog sheet-enter-bottom sheet-surface absolute inset-x-0 bottom-0 flex flex-col overflow-hidden">
+    <div class="composer-settings-handle"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="composer-settings-header">
+      <span class="composer-settings-title-icon" aria-hidden="true"><i data-lucide="route"></i></span>
+      <div class="composer-settings-title-copy">
+        <div id="composerSettingsTitle" class="composer-settings-title">Mode &amp; agents</div>
+        <div class="composer-settings-subtitle">Choose a workflow, then build the team for your next message.</div>
+      </div>
+      <button data-close class="composer-settings-close" aria-label="Close mode and agents">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="composerSettingsMount" class="composer-settings-body"></div>
+  </aside>
+</div>
+
+<!-- Voice preferences -->
+<div id="changelogSheet" class="fixed inset-0 hidden" style="z-index:56">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="voice-settings-panel sheet-enter-bottom sheet-surface absolute rounded-t-2xl border-t shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 pb-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold">What's new</div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">AGENTS CHAT · changelog</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close changelog">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="changelogBody" class="p-4 overflow-y-auto prose-msg" style="max-height:72vh"></div>
+  </aside>
+</div>
+
+<!-- Activity center — a compact action queue on mobile and a master-detail
+     workspace on desktop. Server-backed notification history remains the source. -->
+<div id="notifSheet" class="fixed inset-0 hidden" style="z-index:59">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="notif-panel voice-settings-panel sheet-enter-bottom sheet-surface absolute overflow-hidden flex flex-col" role="dialog" aria-modal="true" aria-label="Activity">
+    <div class="notif-mobile-handle px-4 pt-3 pb-2 flex justify-center"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="notif-panel-header px-4 pb-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="notif-panel-title inline-flex items-center gap-2"><i data-lucide="bell" class="w-4 h-4 text-gold"></i>Activity</div>
+        <div class="notif-panel-subtitle">work needing attention and recent events</div>
+      </div>
+      <div class="flex items-center gap-1 shrink-0">
+        <button id="notifSettingsBtn" type="button" class="notif-gear relative h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5 transition-colors" aria-label="Activity settings" aria-expanded="false" title="Activity settings">
+          <i data-lucide="sliders-horizontal" style="width:18px;height:18px"></i>
+          <span id="notifMutedDot" class="notif-muted-dot" hidden></span>
+        </button>
+        <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close Activity">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Alert preference toggles — collapsed by default (see .notif-prefs-wrap),
+         toggled by the header gear so the list is the star. renderNotifPrefs fills #notifPrefs. -->
+    <div id="notifPrefsWrap" class="notif-prefs-wrap shrink-0">
+      <div id="notifPrefs" class="px-4 py-3 flex flex-col gap-3"></div>
+    </div>
+    <div id="notifFocus" class="notif-focus shrink-0"></div>
+    <div id="notifToolbar" class="notif-toolbar shrink-0"></div>
+    <div class="notif-workspace flex-1 min-h-0">
+      <section id="notifListPane" class="notif-list-pane min-h-0" aria-label="Activity list">
+        <div id="notifList" class="min-h-0 overflow-y-auto"></div>
+      </section>
+      <article id="notifDetail" class="notif-detail min-h-0" aria-live="polite" aria-label="Selected activity"></article>
+    </div>
+  </aside>
+</div>
+
+<div id="missionSheet" class="fixed inset-0 hidden" style="z-index:57">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="skills-panel sheet-enter-bottom sheet-surface absolute border-t md:border shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center md:hidden"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="radar" class="w-4 h-4 text-gold"></i>LOOPS · Automations Mission Control</div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">your scheduled agents, at a glance</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close automations">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="missionBody" class="flex-1 min-h-0 overflow-y-auto"></div>
+  </aside>
+</div>
+
+
+
+<div id="controlRoomSheet" class="fixed inset-0 hidden" style="z-index:59">
+  <div data-close class="cr-scrim absolute inset-0"></div>
+  <aside class="skills-panel sheet-enter-bottom sheet-surface cr-panel absolute border-t md:border overflow-hidden flex flex-col">
+    <div class="cr-grain" aria-hidden="true"></div>
+    <div class="px-4 pt-3 pb-2 flex justify-center md:hidden relative z-[2]"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div id="controlRoomHeader" class="px-4 md:px-6 py-3.5 flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0 flex items-center gap-3">
+        <span id="controlRoomReactor" class="cr-reactor" aria-hidden="true"></span>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <span id="controlRoomTitle">Control Room</span>
+            <span id="controlRoomPulseDot" class="cr-live-dot" aria-hidden="true"></span>
+          </div>
+          <div id="controlRoomSub">Agents Chat · live pulse</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-1 shrink-0">
+        <button type="button" id="controlRoomSpeakBtn" title="Speak the brief" aria-label="Speak the brief" class="cr-icon-btn">
+          <i data-lucide="volume-2" class="w-4 h-4"></i>
+        </button>
+        <button type="button" id="controlRoomRefreshBtn" title="Refresh" aria-label="Refresh control room" class="cr-icon-btn">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+        <button data-close class="cr-icon-btn" aria-label="Close control room">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <div id="controlRoomBody" class="flex-1 min-h-0 overflow-y-auto"></div>
+  </aside>
+</div>
+
+<div id="skillsSheet" class="fixed inset-0 hidden" style="z-index:57">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="skills-panel sheet-enter-bottom sheet-surface absolute border-t md:border shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center md:hidden"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="wand-2" class="w-4 h-4 text-gold"></i>Skills &amp; automations</div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">reusable recipes the orchestrator can run</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close skills">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="skillsBody" class="flex-1 min-h-0 overflow-hidden"></div>
+  </aside>
+</div>
+
+<div id="secretsSheet" class="fixed inset-0 hidden" style="z-index:57">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="skills-panel sheet-enter-bottom sheet-surface absolute border-t md:border shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center md:hidden"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="key-round" class="w-4 h-4 text-gold"></i>Secrets</div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">API keys &amp; credentials your agents can use</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close secrets">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="secretsBody" class="flex-1 min-h-0 overflow-y-auto"></div>
+  </aside>
+</div>
+
+<div id="atlasSheet" class="fixed inset-0 hidden" style="z-index:57">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="atlas-panel skills-panel sheet-enter-bottom sheet-surface absolute border-t md:border shadow-2xl overflow-hidden flex flex-col" role="dialog" aria-modal="true" aria-labelledby="atlasPanelTitle">
+    <div class="px-4 pt-3 pb-2 flex justify-center md:hidden"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="atlas-panel-header border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0 flex items-center gap-3">
+        <span class="atlas-heading-icon" aria-hidden="true"><i data-lucide="compass" class="w-[18px] h-[18px]"></i></span>
+        <div class="min-w-0">
+          <div id="atlasPanelTitle" class="atlas-panel-title">Chat Atlas</div>
+          <div class="atlas-panel-subtitle">A decision-ready view of projects, team rhythm, agent contribution, and conversation lineage.</div>
+        </div>
+      </div>
+      <button data-close title="Close Chat Atlas" class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close atlas">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="flex-1 min-h-0 overflow-hidden">
+      <iframe id="atlasFrame" title="Chat Atlas" class="w-full h-full" style="border:0;display:block;background:transparent"></iframe>
+    </div>
+  </aside>
+</div>
+
+<div id="mailboxesSheet" class="fixed inset-0 hidden" style="z-index:57">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="skills-panel sheet-enter-bottom sheet-surface absolute border-t md:border shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center md:hidden"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="mail" class="w-4 h-4 text-gold"></i>Mailboxes</div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">Email, calendar &amp; contacts each agent manages</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close mailboxes">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="mailboxesBody" class="flex-1 min-h-0 overflow-y-auto"></div>
+  </aside>
+</div>
+
+<div id="decisionsSheet" class="fixed inset-0 hidden" style="z-index:57">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="skills-panel sheet-enter-bottom sheet-surface absolute border-t md:border shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center md:hidden"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="gavel" class="w-4 h-4 text-gold"></i>Team Memory</div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">Settled calls and lessons your team can reuse</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close team memory">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="decisionsBody" class="flex-1 min-h-0 overflow-y-auto"></div>
+  </aside>
+</div>
+
+<div id="usageSheet" class="fixed inset-0 hidden" style="z-index:57">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="skills-panel sheet-enter-bottom sheet-surface absolute border-t md:border shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center md:hidden"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="gauge" class="w-4 h-4 text-gold"></i>Usage &amp; cost efficiency</div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">tokens per agent vs. pay-per-token API</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close usage">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div id="usageBody" class="flex-1 min-h-0 overflow-y-auto"></div>
+  </aside>
+</div>
+
+<div id="supportSheet" class="fixed inset-0 hidden" style="z-index:58">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="voice-settings-panel sheet-enter-bottom sheet-surface absolute rounded-t-2xl border-t shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 pb-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="message-square-warning" class="w-4 h-4 text-gold"></i>Report a problem</div>
+        <div id="supportDestination" class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">flag an issue to Agents Chat support</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close report a problem">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="p-4 overflow-y-auto flex flex-col gap-4" style="max-height:72vh">
+      <div>
+        <label for="supportExplanation" class="block text-sm font-medium mb-1.5">What happened?</label>
+        <textarea id="supportExplanation" rows="5" maxlength="8000" placeholder="Describe the issue — what you were doing, what went wrong, and anything that looks off…"
+          class="w-full resize-none rounded-lg bg-[var(--bg-elev)] border border-[var(--border)] focus:border-gold/60 focus:outline-none focus:ring-0 p-3 text-sm leading-relaxed placeholder:text-[var(--text-dim)]/60"></textarea>
+      </div>
+      <div id="supportCommunityNotice" class="hidden rounded-lg border border-amber-500/35 bg-amber-500/10 p-3 text-sm leading-relaxed">
+        This opens a <strong>public GitHub issue</strong> for you to review. Do not include passwords, API keys, private chats, personal information, or unredacted logs. Nothing is submitted until you click <strong>Submit new issue</strong> on GitHub.
+      </div>
+      <fieldset id="supportScopeFieldset" class="flex flex-col gap-2">
+        <legend class="text-sm font-medium mb-1">What to include</legend>
+        <label class="flex items-start gap-3 rounded-lg border border-[var(--border)] p-3 cursor-pointer hover:bg-white/5 transition-colors">
+          <input type="radio" name="supportScope" value="full" class="mt-0.5 accent-gold" checked>
+          <span class="min-w-0">
+            <span class="block text-sm font-medium">Save this chat &amp; send it</span>
+            <span class="block text-[12px] text-[var(--text-dim)]">Attaches a formatted <span class="font-mono">.md</span> copy of this whole conversation along with your explanation.</span>
+          </span>
+        </label>
+        <label class="flex items-start gap-3 rounded-lg border border-[var(--border)] p-3 cursor-pointer hover:bg-white/5 transition-colors">
+          <input type="radio" name="supportScope" value="explanation" class="mt-0.5 accent-gold">
+          <span class="min-w-0">
+            <span class="block text-sm font-medium">Just my explanation</span>
+            <span class="block text-[12px] text-[var(--text-dim)]">Sends only what you wrote above — no chat transcript is attached.</span>
+          </span>
+        </label>
+      </fieldset>
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button id="supportCancelBtn" data-close type="button" class="h-10 px-4 rounded-full text-sm text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5 transition-colors">Cancel</button>
+        <button id="supportSendBtn" type="button" class="brand-cta h-10 px-5 rounded-full text-sm font-medium shadow active:scale-95 transition-transform inline-flex items-center gap-2">
+          <i data-lucide="send" class="w-4 h-4"></i><span>Send ticket</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Pass to desktop — attach orchestrator-drafted instructions before handing a
+     chat off to a desktop agent to run headless in the background. -->
+<!-- z-index sits ABOVE the workspace overlay (.ws-ov, z 60): the agents panel's
+     Pass button opens this sheet, and at z 58 it silently opened underneath. -->
+<div id="passDesktopSheet" class="fixed inset-0 hidden" style="z-index:70">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="voice-settings-panel sheet-enter-bottom sheet-surface absolute rounded-t-2xl border-t shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 pb-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="monitor-up" class="w-4 h-4 text-[var(--ember)]"></i>Pass to <span id="passDesktopAgentName">desktop</span></div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">hand this chat off to run headless in the background</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close pass to desktop">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="p-4 overflow-y-auto flex flex-col gap-3" style="max-height:72vh">
+      <!-- Follow-up questions the orchestrator raised (shown only when it asked) -->
+      <div id="passDesktopQuestions" class="hidden rounded-lg p-3" style="border:1px solid color-mix(in srgb, var(--gold) 32%, transparent); background:color-mix(in srgb, var(--gold) 8%, transparent);">
+        <div class="text-[11px] font-medium text-gold inline-flex items-center gap-1.5 mb-1.5"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i>The orchestrator wasn’t sure about a few things</div>
+        <ul id="passDesktopQuestionList" class="pl-4 text-[12px] text-[var(--text-dim)] space-y-1" style="list-style:disc"></ul>
+        <div class="text-[11px] text-[var(--text-dim)] mt-2">Answer them in the instructions below, or just hand off your best guess.</div>
+      </div>
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <label for="passDesktopInstructions" class="block text-sm font-medium">Instructions for the agent</label>
+          <button id="passDesktopRedraftBtn" type="button" class="text-[11px] text-[var(--text-dim)] hover:text-[var(--ember)] inline-flex items-center gap-1" title="Ask the orchestrator to draft again">
+            <i data-lucide="sparkles" class="w-3 h-3"></i><span>Re-draft</span>
+          </button>
+        </div>
+        <textarea id="passDesktopInstructions" rows="6" maxlength="4000" placeholder="What should the agent do once it picks this up?…"
+          class="w-full resize-none rounded-lg bg-[var(--bg-elev)] border border-[var(--border)] focus:border-gold/60 focus:outline-none focus:ring-0 p-3 text-sm leading-relaxed placeholder:text-[var(--text-dim)]/60"></textarea>
+        <div id="passDesktopHint" class="text-[11px] text-[var(--text-dim)] mt-1.5 inline-flex items-center gap-1.5" style="min-height:1rem"></div>
+      </div>
+      <label id="passDesktopNewChatRow" class="flex items-start gap-2.5 text-[12px] text-[var(--text-dim)] select-none cursor-pointer">
+        <input id="passDesktopNewChat" type="checkbox" class="accent-gold w-4 h-4 mt-0.5 shrink-0">
+        <span>Answer in a <b class="text-[var(--text)] font-medium">new chat</b> with this agent — fresh start, this conversation isn’t carried over, and you land in it to watch the reply.</span>
+      </label>
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button data-close type="button" class="h-10 px-4 rounded-full text-sm text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5 transition-colors">Cancel</button>
+        <button id="passDesktopSendBtn" type="button" class="brand-cta h-10 px-5 rounded-full text-sm font-medium shadow active:scale-95 transition-transform inline-flex items-center gap-2">
+          <i data-lucide="monitor-up" class="w-4 h-4"></i><span>Hand off</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Continue with this agent: optional steering note, or just let them keep going -->
+<div id="continueSheet" class="fixed inset-0 hidden" style="z-index:58">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="voice-settings-panel sheet-enter-bottom sheet-surface absolute rounded-t-2xl border-t shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 pb-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="play" class="w-4 h-4 text-[var(--ember)]"></i>Continue with <span id="continueAgentName">agent</span></div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">add optional direction, or just let them keep going</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close continue">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="p-4 overflow-y-auto flex flex-col gap-3" style="max-height:72vh">
+      <textarea id="continueInstructions" rows="3" maxlength="2000" aria-label="Optional instructions for the agent" placeholder="Optional: anything to steer the next step — leave blank to just continue…"
+        class="w-full resize-none rounded-lg bg-[var(--bg-elev)] border border-[var(--border)] focus:border-gold/60 focus:outline-none focus:ring-0 p-3 text-sm leading-relaxed placeholder:text-[var(--text-dim)]/60"></textarea>
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button data-close type="button" class="h-10 px-4 rounded-full text-sm text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5 transition-colors">Cancel</button>
+        <button id="continuePlainBtn" type="button" class="h-10 px-4 rounded-full text-sm border border-[var(--border)] hover:bg-white/5 transition-colors">Continue as-is</button>
+        <button id="continueSendBtn" type="button" class="brand-cta h-10 px-5 rounded-full text-sm font-medium shadow active:scale-95 transition-transform inline-flex items-center gap-2">
+          <i data-lucide="play" class="w-4 h-4"></i><span>Send</span>
+        </button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- Resend a reply: pick exactly which agents get it (composer selection untouched) -->
+<div id="resendPickerSheet" class="fixed inset-0 hidden" style="z-index:58">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="voice-settings-panel sheet-enter-bottom sheet-surface absolute rounded-t-2xl border-t shadow-2xl overflow-hidden flex flex-col">
+    <div class="px-4 pt-3 pb-2 flex justify-center"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 pb-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="send" class="w-4 h-4 text-[var(--ember)]"></i>Resend to…</div>
+        <div class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">pick who gets this message — your composer selection stays put</div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="resendAllBtn" type="button" class="pp-addall">All</button>
+        <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close resend picker">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <div id="resendPickerMount" class="p-4 overflow-y-auto flex flex-col gap-1.5" style="max-height:60vh"></div>
+    <div class="p-4 border-t border-[var(--border)] shrink-0">
+      <button id="resendConfirmBtn" type="button" class="brand-cta w-full h-10 rounded-full text-sm font-medium shadow active:scale-95 transition-transform inline-flex items-center justify-center gap-2">
+        <i data-lucide="send" class="w-4 h-4"></i><span>Resend</span>
+      </button>
+    </div>
+  </aside>
+</div>
+
+<div id="voiceSettingsSheet" class="fixed inset-0 hidden" style="z-index:55">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="voice-settings-panel sheet-enter-bottom sheet-surface absolute rounded-t-2xl border-t shadow-2xl overflow-hidden">
+    <div class="px-4 pt-3 pb-2 flex justify-center"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 pb-3 border-b border-[var(--border)] flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold">Voice</div>
+        <div id="voiceProviderStatus" class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)]">Checking provider...</div>
+      </div>
+      <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close voice settings">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    <div class="p-4 flex flex-col gap-4">
+      <div id="voiceKokoroRestartRow" class="hidden items-center justify-between gap-4 rounded-lg border border-gold/30 bg-gold/5 p-3">
+        <span class="min-w-0">
+          <span class="block text-sm font-medium">Natural neural voice</span>
+          <span id="voiceKokoroRestartHint" class="block text-[11px] text-[var(--text-dim)]">Offline — currently using the Mac system voice.</span>
+        </span>
+        <button id="voiceKokoroRestartBtn" type="button" class="shrink-0 h-9 px-3 rounded-lg border border-gold/40 bg-gold/10 text-sm font-medium text-[var(--text)] hover:bg-gold/20 inline-flex items-center gap-2">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span>Restart</span>
+        </button>
+      </div>
+      <label class="flex items-center justify-between gap-4">
+        <span>
+          <span class="block text-sm font-medium">Auto-send dictation</span>
+          <span class="block text-[11px] text-[var(--text-dim)]">Sends after a short pause when your sentence is complete.</span>
+        </span>
+        <input id="voiceAutoSend" type="checkbox" class="h-5 w-5 accent-[#d8a93e]">
+      </label>
+      <label class="flex items-center justify-between gap-4">
+        <span>
+          <span class="block text-sm font-medium">Autoplay agent replies</span>
+          <span id="voiceAutoplayHint" class="block text-[11px] text-[var(--text-dim)]">Uses the current voice engine (local Kokoro when available) for replies in the open chat, including skills, watched automations, and True Free Will. Delegate and Poll stay silent.</span>
+        </span>
+        <input id="voiceAutoplay" type="checkbox" class="h-5 w-5 accent-[#d8a93e]">
+      </label>
+      <label id="voiceAutoplayBottomLineRow" class="flex items-center justify-between gap-4 transition-opacity opacity-50">
+        <span>
+          <span class="block text-sm font-medium">Read bottom line only</span>
+          <span class="block text-[11px] text-[var(--text-dim)]">Applies when autoplay is on. Checked: read only the opening bottom line. Unchecked: read the full reply. Message 🔊 buttons still read the selected message or card.</span>
+        </span>
+        <input id="voiceAutoplayBottomLine" type="checkbox" class="h-5 w-5 accent-[#d8a93e]" disabled aria-disabled="true">
+      </label>
+      <label class="flex items-center justify-between gap-4">
+        <span>
+          <span class="block text-sm font-medium">Device voice</span>
+          <span class="block text-[11px] text-[var(--text-dim)]">Automatic gives each agent its own neural voice. Or pick one voice for everyone.</span>
+        </span>
+        <select id="voiceDeviceVoice" class="max-w-[48%] h-9 rounded border border-[var(--border)] bg-white text-black px-2 text-sm">
+          <option value="">Automatic per agent</option>
+        </select>
+      </label>
+      <label class="flex items-center justify-between gap-4">
+        <span class="text-sm font-medium">Playback speed</span>
+        <select id="voicePlaybackRate" class="h-9 rounded border border-[var(--border)] bg-white text-black px-2 text-sm">
+          <option value="0.85">0.85x</option>
+          <option value="1">1x</option>
+          <option value="1.15">1.15x</option>
+          <option value="1.3">1.3x</option>
+          <option value="1.5">1.5x</option>
+        </select>
+      </label>
+      <p class="rounded-lg border border-gold/20 bg-gold/5 p-3 text-[11px] leading-relaxed text-[var(--text-dim)]">
+        Codex generates the reply text. The Agents Chat Mac now uses a local neural voice without an OpenAI API key, including for your iPhone. Apple does not expose the private Siri voice itself; Ava Enhanced remains available automatically if the neural service is offline.
+      </p>
+    </div>
+  </aside>
+</div>
+
+<!-- Episode setup: long chats default to a bounded highlights cut. -->
+<div id="episodeSetupSheet" class="fixed inset-0 hidden flex items-center justify-center p-4" aria-hidden="true" style="z-index:61">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <section class="relative w-full max-w-xl max-h-[92dvh] overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--bg-elev)] shadow-2xl" aria-labelledby="episodeSetupTitle" aria-describedby="episodeSetupIntro">
+    <header class="flex items-start gap-3 px-5 py-4 border-b border-[var(--border)]">
+      <span class="h-10 w-10 shrink-0 rounded-xl inline-flex items-center justify-center bg-gold/10 text-gold"><i data-lucide="clapperboard" class="w-5 h-5"></i></span>
+      <div class="min-w-0 flex-1">
+        <h2 id="episodeSetupTitle" class="text-lg font-semibold text-[var(--text)]">Make an episode</h2>
+        <p id="episodeSetupIntro" class="mt-1 text-sm leading-relaxed text-[var(--text-dim)]">Choose the version you want. Long chats can become a shorter highlights episode.</p>
+      </div>
+      <button data-close type="button" class="h-11 w-11 shrink-0 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close episode setup"><i data-lucide="x" class="w-5 h-5"></i></button>
+    </header>
+    <div class="p-5 space-y-3">
+      <div id="episodeSetupSummary" class="rounded-xl border border-[var(--border)] px-4 py-3 text-xs leading-relaxed text-[var(--text-dim)]" role="status">Checking this conversation…</div>
+
+      <label id="episodeHighlightsChoice" class="episode-setup-choice block rounded-xl border border-[var(--border)] p-4 cursor-pointer">
+        <span class="flex items-start gap-3">
+          <input id="episodePresetHighlights" type="radio" name="episodePreset" value="highlights" checked class="mt-1 h-5 w-5 shrink-0 accent-gold">
+          <span class="min-w-0 flex-1">
+            <span class="flex flex-wrap items-center gap-2">
+              <strong class="text-[15px] text-[var(--text)]">Highlights — about 10 minutes</strong>
+              <span class="rounded-full px-2 py-1 text-[9px] font-mono uppercase tracking-wider bg-gold/15 text-gold">Recommended</span>
+            </span>
+            <span class="mt-2 block text-xs leading-relaxed text-[var(--text-dim)]">Keeps a balanced set of moments from the beginning, middle, and end. It works even when the complete chat is too large.</span>
+          </span>
+        </span>
+      </label>
+
+      <label id="episodeFullChoice" class="episode-setup-choice block rounded-xl border border-[var(--border)] p-4 cursor-pointer">
+        <span class="flex items-start gap-3">
+          <input id="episodePresetFull" type="radio" name="episodePreset" value="full" class="mt-1 h-5 w-5 shrink-0 accent-gold">
+          <span class="min-w-0 flex-1">
+            <strong id="episodeFullLabel" class="text-[15px] text-[var(--text)]">Full conversation</strong>
+            <span class="mt-2 block text-xs leading-relaxed text-[var(--text-dim)]">Uses every agent reply, word for word, when the conversation fits the safe 20-minute render limit.</span>
+            <span id="episodeFullReason" class="hidden mt-2 text-xs leading-relaxed" style="color:var(--ember)" role="note"></span>
+          </span>
+        </span>
+      </label>
+
+      <div id="episodeSetupError" class="hidden rounded-xl border px-4 py-3 text-sm leading-relaxed" style="border-color:color-mix(in srgb,var(--ember) 40%,transparent);background:color-mix(in srgb,var(--ember) 8%,transparent);color:var(--ember)" role="alert"></div>
+      <p class="text-[11px] leading-relaxed text-[var(--text-dim)]">Agents Chat uses the connected local voice engine. Nothing is uploaded to make the episode.</p>
+    </div>
+    <footer class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 px-5 py-4 border-t border-[var(--border)]">
+      <button data-close type="button" class="min-h-11 px-5 rounded-lg border border-[var(--border)] text-sm font-semibold text-[var(--text)] hover:bg-white/5">Cancel</button>
+      <button id="episodeStartBtn" type="button" disabled class="min-h-11 px-5 rounded-lg bg-gold text-black text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">Create highlights episode</button>
+    </footer>
+  </section>
+</div>
+
+<!-- Chat history search overlay -->
+<div id="searchOverlay" class="fixed inset-0 z-[60] hidden" aria-hidden="true" inert>
+  <div data-search-close class="absolute inset-0 sheet-backdrop"></div>
+  <div class="search-panel border border-[var(--border)] bg-[var(--bg-elev)] rounded-2xl shadow-2xl overflow-hidden flex flex-col" role="dialog" aria-label="Search this chat">
+    <div class="flex items-center gap-2 px-3 py-2.5 border-b border-[var(--border)]">
+      <i data-lucide="search" class="w-4 h-4 text-[var(--text-dim)] shrink-0"></i>
+      <input id="searchInput" type="text" autocomplete="off" spellcheck="false" aria-label="Search this chat's history"
+        placeholder="Search this chat's history…"
+        class="flex-1 bg-transparent outline-none text-[15px] text-[var(--text)] placeholder:text-[var(--text-dim)]" />
+      <kbd class="hidden md:inline text-[10px] font-mono text-[var(--text-dim)] border border-[var(--border)] rounded px-1.5 py-0.5">esc</kbd>
+      <button data-search-close aria-label="Close search"
+        class="h-8 w-8 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+    <div id="searchResults" class="overflow-y-auto px-2 py-2"></div>
+  </div>
+</div>
+
+<div id="missionMapSheet" class="fixed inset-0 hidden" style="z-index:58">
+  <div data-close class="absolute inset-0 sheet-backdrop"></div>
+  <aside class="mission-map-panel sheet-enter-bottom sheet-surface absolute border-t md:border shadow-2xl overflow-hidden flex flex-col" role="dialog" aria-label="Mission Map">
+    <div class="px-4 pt-3 pb-2 flex justify-center md:hidden"><span class="sheet-handle" aria-hidden="true"></span></div>
+    <div class="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between gap-3 shrink-0">
+      <div class="min-w-0">
+        <div class="text-sm font-semibold inline-flex items-center gap-2"><i data-lucide="git-branch" class="w-4 h-4 text-gold"></i>Mission Map</div>
+        <div id="missionMapSubtitle" class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] truncate">current chat</div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="missionMapRefreshBtn" type="button" title="Refresh map" aria-label="Refresh Mission Map" class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-gold hover:bg-white/5">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+        </button>
+        <button data-close class="h-10 w-10 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" aria-label="Close Mission Map">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <div id="missionMapBody" class="flex-1 min-h-0 overflow-y-auto p-3 md:p-4"></div>
+  </aside>
+</div>
+
+<div class="flex h-[100dvh] w-full overflow-hidden">
+
+  <!-- Activity bar (desktop) -->
+  <nav id="activityRail" class="activity-rail is-icon-only hidden md:block shrink-0 z-40" aria-label="Primary">
+    <div class="rail-inner">
+      <button type="button" class="rail-home hover:opacity-80 transition-opacity" id="productGuideRailBtn" aria-label="Ask about Agents Chat">
+        <span class="e-mark" role="img" aria-label="AGENTS CHAT" style="width:26px;height:14px"></span>
+        <span class="rail-label rail-word">AGENTS CHAT</span>
+      </button>
+      <div class="rail-scroll">
+      <details class="rail-section" data-nav-section="chat" open>
+      <summary class="rail-group" title="Show or hide This chat"><span>This chat</span><i data-lucide="chevron-down" class="rail-group-chevron" aria-hidden="true"></i></summary>
+      <div class="rail-section-body">
+      <button data-view="chat" title="Chat" class="rail-btn bg-gold/10 text-gold">
+        <i data-lucide="message-square" class="w-5 h-5"></i><span class="rail-label">Chat</span>
+      </button>
+      <!-- SIMPLE MODE HELD — unlinked until the rebuild ships (simple-ui/REBUILD_SPEC.md). -->
+
+      <button data-view="files" title="Files" class="rail-btn">
+        <i data-lucide="folder" class="w-5 h-5"></i><span class="rail-label">Files</span>
+      </button>
+      <button data-act="open-gallery" type="button" title="Chat Canvas — open this chat's shared canvas; agents share and build their visuals here in the thread" aria-label="Chat Canvas" class="rail-btn">
+        <i data-lucide="layout-grid" class="w-5 h-5"></i><span class="rail-label">Canvas</span>
+      </button>
+      <button data-action="open-mission-map" type="button" title="Mission Map — branches, handoffs, and live work in this chat" aria-label="Mission Map" class="rail-btn">
+        <i data-lucide="git-branch" class="w-5 h-5"></i><span class="rail-label">Mission Map</span>
+      </button>
+      </div>
+      </details>
+      <details class="rail-section" data-nav-section="work" open>
+      <summary class="rail-group" title="Show or hide Your work"><span>Your work</span><i data-lucide="chevron-down" class="rail-group-chevron" aria-hidden="true"></i></summary>
+      <div class="rail-section-body">
+      <button data-view="projects" title="Projects" class="rail-btn">
+        <i data-lucide="briefcase" class="w-5 h-5"></i><span class="rail-label">Projects</span>
+      </button>
+      <button data-view="calendar" title="Calendar" class="rail-btn">
+        <i data-lucide="calendar-days" class="w-5 h-5"></i><span class="rail-label">Calendar</span>
+      </button>
+      <button data-action="open-atlas" type="button" title="Chat Atlas — conversations seen through projects, rhythm, agent contribution, and follow-up lineage" aria-label="Chat Atlas" class="rail-btn">
+        <i data-lucide="compass" class="w-5 h-5"></i><span class="rail-label">Atlas</span>
+      </button>
+      <button id="decisionsRailBtn" type="button" title="Team Memory — settled calls and lessons your team can reuse" aria-label="Team Memory" class="rail-btn">
+        <i data-lucide="gavel" class="w-5 h-5"></i><span class="rail-label">Team Memory</span>
+      </button>
+      </div>
+      </details>
+      <details class="rail-section" data-nav-section="automation">
+      <summary class="rail-group" title="Show or hide Automation"><span>Automation</span><i data-lucide="chevron-down" class="rail-group-chevron" aria-hidden="true"></i></summary>
+      <div class="rail-section-body">
+      <button data-action="open-mission" type="button" title="LOOPS — Automations Mission Control" aria-label="LOOPS" class="rail-btn">
+        <i data-lucide="radar" class="w-5 h-5"></i><span class="rail-label">LOOPS</span>
+      </button>
+      <button data-action="open-skills" type="button" title="Skills &amp; automations" aria-label="Skills &amp; automations" class="rail-btn">
+        <i data-lucide="wand-2" class="w-5 h-5"></i><span class="rail-label">Skills</span>
+      </button>
+      <button data-action="open-control-room" type="button" title="Control Room — box health, seats, sensors, foreman" aria-label="Control Room" class="rail-btn hidden">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i><span class="rail-label">Control Room</span>
+      </button>
+      <button id="automationRailBtn" type="button" title="Automation running — click to pause all unattended agent runs" aria-label="Pause automation" class="rail-btn hidden">
+        <i data-lucide="power" class="w-5 h-5"></i><span class="rail-label">Pause automation</span>
+      </button>
+      </div>
+      </details>
+      <details class="rail-section" data-nav-section="connected">
+      <summary class="rail-group" title="Show or hide Connected"><span>Connected</span><i data-lucide="chevron-down" class="rail-group-chevron" aria-hidden="true"></i></summary>
+      <div class="rail-section-body">
+      <button data-action="open-mailboxes" type="button" title="Mailboxes — email, calendar &amp; contacts each agent manages" aria-label="Mailboxes" class="rail-btn">
+        <i data-lucide="mail" class="w-5 h-5"></i><span class="rail-label">Mailboxes</span>
+      </button>
+      <button data-action="open-secrets" type="button" title="Secrets" aria-label="Secrets" class="rail-btn">
+        <i data-lucide="key-round" class="w-5 h-5"></i><span class="rail-label">Secrets</span>
+      </button>
+      </div>
+      </details>
+      </div>
+      <div class="rail-foot">
+      <button data-view="settings" type="button" title="Settings" aria-label="Settings" class="rail-btn rail-settings-direct">
+        <i data-lucide="settings" class="w-5 h-5"></i><span class="rail-label">Settings</span>
+      </button>
+      <details class="rail-utility-menu">
+      <summary class="rail-utility-trigger" title="App and support">
+        <i data-lucide="circle-ellipsis" class="w-5 h-5"></i>
+        <span class="rail-label">App &amp; support</span>
+        <i data-lucide="chevron-up" class="rail-utility-chevron" aria-hidden="true"></i>
+      </summary>
+      <div class="rail-utility-popover">
+      <div class="rail-utility-heading"><span>App &amp; support</span><span class="rail-utility-hint">Preferences and help</span></div>
+      <button data-action="open-usage" type="button" title="Usage &amp; cost — tokens per agent vs. API cost" aria-label="Usage and cost" class="rail-btn">
+        <i data-lucide="gauge" class="w-5 h-5"></i><span class="rail-label">Usage &amp; cost</span>
+      </button>
+      <button id="whatsNewRailBtn" type="button" title="What's new" aria-label="What's new" class="rail-btn">
+        <i data-lucide="sparkles" class="w-5 h-5"></i><span class="rail-label">What's new</span>
+      </button>
+      <button id="supportRailBtn" type="button" title="Report a problem — send a support ticket to Agents Chat support" aria-label="Report a problem" class="rail-btn">
+        <i data-lucide="message-square-warning" class="w-5 h-5"></i><span class="rail-label">Report a problem</span>
+      </button>
+      </div>
+      </details>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- Desktop threads sidebar -->
+  <aside id="threadsDesktop" class="threads-panel side-panel desktop-auto-panel compact-persistent-panel shrink-0 border-r flex-col"></aside>
+
+  <!-- Main column -->
+  <main id="appMain" class="flex-1 flex flex-col min-w-0 relative h-full">
+
+    <div id="chatSwitchOverlay" class="chat-switch-overlay hidden absolute inset-0 z-50 items-center justify-center" role="status" aria-live="polite" aria-busy="true">
+      <div class="inline-flex items-center gap-2 rounded-full border border-[var(--border-strong)] bg-[var(--surface-raised)] px-4 py-2 text-sm text-[var(--text)] shadow-2xl">
+        <i data-lucide="loader" class="w-4 h-4 animate-spin text-gold"></i>
+        <span id="chatSwitchOverlayLabel">Opening conversation…</span>
+      </div>
+    </div>
+    <!-- Global header -->
+    <header class="app-header mobile-app-header h-12 border-b shrink-0 flex items-center px-3 md:px-4 justify-between backdrop-blur-md sticky top-0 z-10 gap-3">
+      <div class="header-brand-cluster flex items-center gap-2 md:gap-3 min-w-0">
+        <button id="navOpenBtn" aria-label="Menu" class="md:hidden h-9 w-9 -ml-1 rounded-md flex items-center justify-center text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)]">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <button type="button" id="productGuideBtn" class="nb-lockup" aria-label="Ask about Agents Chat">
+          <span class="e-mark sm" aria-hidden="true"></span>
+          <span class="nb-stack">
+            <span class="nb-word">AGENTS CHAT</span>
+            <span class="nb-engine hidden md:inline-flex">- NEURO-BLEND ENGINE<span class="nb-on" aria-hidden="true"></span></span>
+          </span>
+        </button>
+      </div>
+      <button type="button" id="desktopRoomIdentity"
+        class="desktop-room-identity" aria-label="Current conversation" title="Scroll to the top of this conversation">
+        <span class="desktop-room-emblem" aria-hidden="true">
+          <i data-lucide="messages-square" class="w-4 h-4"></i>
+        </span>
+        <span class="desktop-room-copy">
+          <span class="desktop-room-context"><i aria-hidden="true"></i><span id="desktopHdrContext">Current conversation</span></span>
+          <span id="desktopHdrTitle" class="desktop-room-title">New conversation</span>
+        </span>
+      </button>
+      <div class="header-actions flex items-center gap-2 text-xs text-[var(--text-dim)] shrink-0">
+        <button id="searchOpenBtn" title="Search this chat (⌘/Ctrl+K)" aria-label="Search this chat"
+          class="inline-flex items-center justify-center h-8 w-8 rounded-md text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)] transition-colors">
+          <i data-lucide="search" class="w-[18px] h-[18px]"></i>
+        </button>
+        <!-- Control Room / Mission Map live in the left rail (and mobile nav
+             sheet) — the header copies were duplicate nav and are gone. -->
+        <button id="themeToggleBtn" title="Toggle light / dark" aria-label="Toggle light or dark theme"
+          class="inline-flex items-center justify-center h-8 w-8 rounded-md text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)] transition-colors">
+          <i data-lucide="sun-moon" class="w-[18px] h-[18px]"></i>
+        </button>
+        <button id="notifBellBtn" title="Activity" aria-label="Open Activity" aria-haspopup="dialog"
+          class="relative inline-flex items-center justify-center h-8 w-8 rounded-md text-[var(--text-dim)] hover:bg-white/5 hover:text-gold transition-colors">
+          <span class="bell-ic inline-flex"><i data-lucide="bell" class="w-[18px] h-[18px]"></i></span>
+          <span id="notifBellDot" class="notif-bell-dot hidden">0</span>
+        </button>
+        <button id="reconnectBtn" title="Click to reconnect" aria-label="Reconnect"
+          class="inline-flex items-center gap-2 px-2 py-1 rounded-md hover:bg-white/5 active:bg-white/10 transition-colors">
+          <span id="hdrStatusDot" class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="hdrStatusLabel" class="hidden md:inline font-mono uppercase tracking-widest">connecting…</span>
+        </button>
+        <button id="workspaceBtn" title="Chat workspace and agents" aria-label="Chat workspace and agents"
+          class="inline-flex items-center gap-1.5 px-2 h-8 rounded-md text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)] transition-colors">
+          <i data-lucide="folder" class="w-[18px] h-[18px]"></i>
+          <span class="lbl hidden sm:inline font-mono text-[11px]" id="workspaceBtnLabel">Chat files</span>
+        </button>
+        <span class="hidden md:inline font-mono opacity-60">·</span>
+        <button id="whatsNewBadge" type="button" title="What's new" aria-label="What's new"
+          class="hidden md:inline-flex items-center gap-1.5 font-mono opacity-90 hover:opacity-100 rounded-full border border-[var(--border)] hover:border-[var(--border-strong)] bg-white/[0.03] px-2 py-0.5 transition-colors cursor-pointer">
+          <span class="w-1.5 h-1.5 rounded-full" style="background:var(--text-dim)"></span><span id="whatsNewVersion">v0.1.0-beta.1</span>
+        </button>
+        <span class="hidden md:inline font-mono opacity-60">·</span>
+        <span id="accountLabel" class="hidden md:inline font-mono text-[11px] opacity-90 max-w-[12ch] truncate" title="Signed in"></span>
+        <button id="logoutBtn" title="Sign out" aria-label="Sign out"
+          class="hidden h-8 w-8 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)] transition-colors">
+          <i data-lucide="log-out" class="w-[18px] h-[18px]"></i>
+        </button>
+      </div>
+    </header>
+
+    <aside id="productGuidePop" class="pg-pop" hidden>
+      <div class="pg-card">
+        <div class="pg-head" id="pgHead">
+          <div class="pg-title">Ask about Agents Chat</div>
+          <button type="button" id="pgCloseBtn" class="pg-close" aria-label="Close guide">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="pg-scan-wrap">
+          <canvas id="pgScan" width="380" height="72"></canvas>
+          <div class="pg-status" id="pgStatus">Ready</div>
+        </div>
+        <div class="pg-thread" id="pgThread"></div>
+        <div class="pg-compose">
+          <textarea id="pgInput" rows="2" placeholder="Ask anything about the app…"></textarea>
+          <div class="pg-actions">
+            <button type="button" id="pgLiveBtn" class="pg-live">Live chat</button>
+            <button type="button" id="pgSendBtn" class="pg-send">Send</button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile sub-header (threads + agents triggers) -->
+    <div class="mobile-subheader room-bar compact-room-bar h-11 border-b items-center justify-between px-2 backdrop-blur-sm shrink-0">
+      <button id="threadsOpenBtn" aria-label="Open threads" class="room-nav-button h-9 w-9 rounded-md flex items-center justify-center text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)]">
+        <i data-lucide="panel-left" class="w-[18px] h-[18px]"></i>
+        <span class="room-button-label">Chats</span>
+      </button>
+      <button id="mobileScrollTopBtn" type="button" class="mobile-room-copy min-w-0 flex-1 text-center px-2" aria-label="Scroll conversation to the top" title="Back to top">
+        <div id="subHdrTitle" class="mobile-room-title text-[12px] font-semibold text-[var(--text)] truncate">CHAT</div>
+        <div id="subHdrMeta" class="mobile-room-meta text-[9px] font-mono uppercase tracking-wider text-[var(--text-dim)] truncate"></div>
+      </button>
+      <button id="agentsOpenBtn" aria-label="Open agents" class="room-nav-button h-9 min-w-9 px-2 rounded-md flex items-center gap-1.5 justify-center text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)]">
+        <i data-lucide="users" class="w-[18px] h-[18px]"></i>
+        <span class="room-button-label">Agents</span>
+        <span id="agentsOpenLabel" class="room-count-badge text-[11px] font-mono text-[var(--text-dim)]"></span>
+      </button>
+    </div>
+
+    <!-- Conversation + inspector -->
+    <div id="chatWorkspace" class="flex-1 flex min-h-0 relative overflow-hidden">
+      <aside id="codingCrewRail" class="coding-mission-crew shrink-0" aria-label="Coding mission crew" hidden></aside>
+      <section id="missionSurface" class="flex-1 flex flex-col min-w-0">
+        <div id="roomStrip" class="hidden shrink-0" role="status" aria-live="polite"></div>
+        <div id="codingMissionHeader" class="coding-mission-header shrink-0" hidden></div>
+        <div class="thread-scroll-host flex-1 min-h-0 flex flex-col relative">
+        <div id="msgScroll" class="flex-1 overflow-y-auto min-h-0">
+          <section id="todayBand" class="hearth-today-wrap hearth-scope" aria-label="Today at a glance" hidden>
+            <div id="todayBandMount" class="hearth-today-band hearth-wash-light">
+              <div class="hearth-today-loading">Preparing today…</div>
+            </div>
+          </section>
+          <div id="msgList" class="thread-col flex flex-col min-h-full py-4 md:py-6 px-3 md:px-8 lg:px-10 w-full"></div>
+        </div>
+        <div id="threadJump" class="thread-jump" hidden>
+          <button type="button" data-thread-jump="top" title="Jump to top" aria-label="Jump to top of conversation">
+            <i data-lucide="chevron-up"></i>
+          </button>
+          <button type="button" data-thread-jump="bottom" title="Jump to bottom" aria-label="Jump to bottom of conversation">
+            <i data-lucide="chevron-down"></i>
+          </button>
+        </div>
+        </div>
+
+        <!-- Composer. #composerHome is the parked location; on an empty
+             general chat the dock is moved into #landingComposerSlot so the
+             launch panel and the live composer are one object. -->
+        <div id="composerHome">
+        <div class="mobile-composer-shell composer-dock px-3 md:px-4 pt-3 pb-3 shrink-0" style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom));">
+          <div class="thread-col flex flex-col gap-2 relative">
+            <div class="composer-context-actions flex flex-row flex-wrap items-center gap-x-1.5 gap-y-1 self-start">
+              <button id="composerSettingsPill" type="button" class="composer-settings-pill" aria-haspopup="dialog" aria-label="Mode and agents">
+                <i data-lucide="sliders-horizontal" class="composer-settings-pill-icon w-3.5 h-3.5 shrink-0"></i>
+                <span data-pill-text class="composer-settings-pill-copy truncate"><span data-pill-mode>Counsel</span><span class="composer-settings-pill-separator"> · </span><span data-pill-agents>No agents</span></span>
+                <i data-lucide="chevron-up" class="composer-settings-pill-chevron w-3.5 h-3.5 shrink-0"></i>
+              </button>
+              <div data-chat-secret-mount class="chat-credentials-bar"></div>
+              <div id="runningSkillBar" class="hidden items-center gap-1.5">
+                <button id="runningSkillChip" type="button" title="This chat is running a skill — click to open it" class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[10px] font-mono uppercase tracking-wider bg-gold/10 text-gold border border-gold/25 hover:bg-gold/15">
+                  <i data-lucide="wand-2" class="w-3 h-3"></i><span>Running</span><span id="runningSkillName" class="font-semibold normal-case max-w-[28ch] truncate"></span>
+                </button>
+                <button id="runningSkillSaveChip" type="button" data-action="save-skill" title="Save this chat as a reusable skill" class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] border border-[var(--border)] hover:text-[var(--text)] hover:bg-white/5">
+                  <i data-lucide="sparkles" class="w-3 h-3"></i><span>Save as skill</span>
+                </button>
+              </div>
+              <!-- Persistent "Save as skill" chip: once a chat looks skill-worthy the
+                   affordance STAYS here (desktop and mobile) instead of vanishing with
+                   the one-shot suggestion bar below. -->
+              <div id="saveSkillBar" class="hidden items-center gap-1.5">
+                <button id="saveSkillChip" type="button" data-action="save-skill" title="This chat looks reusable — save it as a skill" class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[10px] font-mono uppercase tracking-wider bg-gold/10 text-gold border border-gold/25 hover:bg-gold/15">
+                  <i data-lucide="sparkles" class="w-3 h-3"></i><span>Save as skill</span>
+                </button>
+              </div>
+              <div id="freewillListenBar" class="hidden items-center gap-1.5">
+                <button id="freewillListenChip" type="button" data-action="freewill-listen" title="Play this episode back, agent voice by agent voice" class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] border border-[var(--border)] hover:text-[var(--text)] hover:bg-white/5">
+                  <i data-lucide="headphones" class="w-3 h-3"></i><span>Listen to episode</span>
+                </button>
+              </div>
+              <div id="episodeBar" class="hidden items-center gap-1.5">
+                <button id="episodeBtn" type="button" title="Turn this chat into a cinematic, self-playing video you can screen-record for YouTube" class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] border border-[var(--border)] hover:text-[var(--text)] hover:bg-white/5 disabled:opacity-60">
+                  <span id="episodeBtnIcon" class="inline-flex"><i data-lucide="clapperboard" class="w-3 h-3"></i></span><span id="episodeBtnLabel">Make episode</span>
+                </button>
+              </div>
+              <div id="rememberBar" class="hidden items-center gap-1.5">
+                <button id="rememberBtn" type="button" title="Send this chat to the orchestrator to note what it reveals about the agents — added to their dossier" class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] border border-[var(--border)] hover:text-[var(--text)] hover:bg-white/5 disabled:opacity-60">
+                  <i data-lucide="brain" class="w-3 h-3"></i><span id="rememberBtnLabel">Remember</span>
+                </button>
+                <button id="logDecisionsBtn" type="button" title="Open Team Memory to review, record, or retire what the team has settled" class="inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] border border-[var(--border)] hover:text-[var(--text)] hover:bg-white/5 disabled:opacity-60">
+                  <i data-lucide="gavel" class="w-3 h-3"></i><span id="logDecisionsBtnLabel">Team memory</span>
+                </button>
+              </div>
+              <button id="canvasFab" type="button" data-act="open-gallery" style="display:none" title="Open all visuals in this chat" aria-label="Open canvas gallery">
+                <i data-lucide="layout-grid" class="w-3 h-3"></i>
+                <span>Canvas</span>
+                <span id="canvasFabCount" class="canvas-fab-count">0</span>
+              </button>
+              <button id="projectPreviewChatButton" type="button" data-act="project-preview" class="project-preview-chat-button"
+                title="Run this coding project and open it in the side panel" aria-label="Start live preview">
+                <i data-preview-icon data-lucide="monitor-play" class="w-3 h-3"></i>
+                <span data-preview-label>Live preview</span>
+              </button>
+            </div>
+            <div id="skillSuggestBar" class="hidden items-center gap-2.5 rounded-xl border border-gold/30 bg-gold/5 px-3 py-2">
+              <i data-lucide="wand-2" class="w-4 h-4 text-gold shrink-0"></i>
+              <span id="skillSuggestText" class="text-[12px] text-[var(--text)] flex-1 min-w-0"></span>
+              <div id="skillSuggestActions" class="flex items-center gap-2 shrink-0"></div>
+              <button id="skillSuggestDismiss" class="h-7 w-7 rounded-full inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5 shrink-0" aria-label="Dismiss"><i data-lucide="x" class="w-4 h-4"></i></button>
+            </div>
+            <!-- SIGNAL state layer: decisions dock — held actions surface right above
+                 the composer so steering is one glance away (mobile especially). -->
+            <div id="decisionsDock" role="status" aria-live="polite" class="hidden items-center gap-2.5 rounded-xl px-3 py-2">
+              <span class="thread-state-dot is-needsyou shrink-0" aria-hidden="true"></span>
+              <span id="decisionsDockText" class="text-[12px] text-[var(--text)] flex-1 min-w-0 truncate"></span>
+              <button id="decisionsDockJump" class="decisions-dock-btn text-[11px] font-medium px-2.5 py-1 rounded-md shrink-0" aria-label="Review the pending decision">Review</button>
+            </div>
+            <div class="composer-picker-row">
+              <div id="modeControl"></div>
+              <div id="targetChips"></div>
+            </div>
+            <div id="scopeIndicator" class="scope-indicator hidden" role="status" aria-live="polite"></div>
+            <div id="counselPreview" class="counsel-preview-row"></div>
+            <div id="pendingAttachments" class="hidden flex-nowrap md:flex-wrap gap-2 px-1 mb-1 overflow-x-auto scrollbar-none"></div>
+            <div id="voicePlayer" class="rounded-lg border border-gold/20 bg-gold/5 px-3 py-2 flex items-center gap-2 text-xs" style="display:none">
+              <i data-lucide="audio-lines" class="w-4 h-4 text-gold shrink-0"></i>
+              <div class="min-w-0 flex-1">
+                <div id="voicePlayerTitle" class="truncate font-medium">Preparing spoken reply...</div>
+                <div class="text-[9px] font-mono uppercase tracking-wider text-[var(--text-dim)]">AI-generated voice</div>
+                <!-- Episode scrubber: shown only while "Listen to episode" is playing.
+                     The slider is turn-indexed (each stop = one agent turn), so dragging
+                     it jumps to a turn — a continuous time bar can't work here since an
+                     episode is a queue of separate per-turn clips, not one file. -->
+                <div id="episodeScrub" class="hidden items-center gap-2 mt-1">
+                  <input id="episodeSlider" type="range" min="0" max="0" value="0" step="1" class="flex-1 h-1.5 accent-gold cursor-pointer" title="Slide forward or back through the episode" aria-label="Episode position">
+                  <span id="episodePos" class="shrink-0 text-[9px] font-mono text-[var(--text-dim)]">1/1</span>
+                </div>
+              </div>
+              <button id="voicePrevBtn" class="hidden h-8 w-8 rounded-full inline-flex items-center justify-center hover:bg-white/5 text-[var(--text-dim)] hover:text-[var(--text)]" title="Previous turn" aria-label="Previous turn">
+                <i data-lucide="skip-back" class="w-4 h-4"></i>
+              </button>
+              <button id="voicePauseBtn" class="h-8 w-8 rounded-full inline-flex items-center justify-center hover:bg-white/5 text-[var(--text-dim)] hover:text-[var(--text)]" title="Pause or resume" aria-label="Pause or resume spoken reply">
+                <i data-lucide="pause" class="w-4 h-4"></i>
+              </button>
+              <button id="voiceNextBtn" class="hidden h-8 w-8 rounded-full inline-flex items-center justify-center hover:bg-white/5 text-[var(--text-dim)] hover:text-[var(--text)]" title="Next turn" aria-label="Next turn">
+                <i data-lucide="skip-forward" class="w-4 h-4"></i>
+              </button>
+              <button id="voiceStopBtn" class="h-8 w-8 rounded-full inline-flex items-center justify-center hover:bg-white/5 text-[var(--text-dim)] hover:text-[var(--ember)]" title="Stop" aria-label="Stop spoken reply">
+                <i data-lucide="square" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+            <input id="fileInput" type="file" multiple class="hidden" aria-label="Attach files to this message"
+                   accept="image/*,video/*,audio/*,application/pdf,text/*,application/json,application/zip,.docx,.xlsx,.pptx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation">
+            <div id="composerBox" class="composer-surface mobile-command-dock relative flex items-end gap-1.5 md:gap-2 border rounded-xl p-1.5 md:p-2 transition-all">
+              <!-- Desktop: primary message tools share one quiet tray, followed by
+                   a divider and overflow. Mobile collapses the whole tray to "+". -->
+              <div class="composer-tool-tray shrink-0 flex items-center" role="group" aria-label="Message tools">
+                <button id="attachBtn" class="shrink-0 h-11 w-11 md:h-8 md:w-8 rounded-full text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)] transition-colors mobile-tap-target" title="Attach files (or paste / drag & drop)" aria-label="Attach files">
+                  <i data-lucide="paperclip" class="w-[18px] h-[18px] mx-auto"></i>
+                </button>
+                <button id="micBtn" class="shrink-0 h-11 w-11 md:h-8 md:w-8 rounded-full text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)] transition-colors mobile-tap-target" title="Dictate (voice → text)" aria-label="Voice input">
+                  <i data-lucide="mic" class="w-[18px] h-[18px] mx-auto"></i>
+                </button>
+                <button id="voiceSettingsBtn" class="shrink-0 h-11 w-11 md:h-8 md:w-8 rounded-full text-[var(--text-dim)] hover:bg-white/5 hover:text-gold transition-colors mobile-tap-target" title="Voice settings" aria-label="Voice settings">
+                  <i data-lucide="audio-lines" class="w-[18px] h-[18px] mx-auto"></i>
+                </button>
+                <button id="enhanceBtn" class="shrink-0 h-11 w-11 md:h-8 md:w-8 rounded-full text-[var(--text-dim)] hover:bg-white/5 hover:text-gold transition-colors mobile-tap-target" title="Enhance prompt — sharpen your draft" aria-label="Enhance prompt">
+                  <i data-lucide="sparkles" class="w-[18px] h-[18px] mx-auto"></i>
+                </button>
+                <button id="compactBtn" class="shrink-0 h-11 w-11 md:h-8 md:w-8 rounded-full text-[var(--text-dim)] hover:bg-white/5 hover:text-gold transition-colors mobile-tap-target" title="Summarize older context — preserve early details for future agent handoffs and refreshed sessions" aria-label="Summarize older chat context">
+                  <i data-lucide="archive" class="w-[18px] h-[18px] mx-auto"></i>
+                </button>
+                <button id="bgToggleBtn" type="button" aria-pressed="false" class="shrink-0 h-11 w-11 md:h-8 md:w-8 rounded-full text-[var(--text-dim)] hover:bg-white/5 hover:text-gold transition-colors mobile-tap-target" title="Run in background — fire-and-forget; I'll buzz you (in-app + pager) when it's done" aria-label="Run next message in the background">
+                  <i data-lucide="rocket" class="w-[18px] h-[18px] mx-auto"></i>
+                </button>
+                <span class="composer-tool-divider shrink-0" aria-hidden="true"></span>
+                <div id="composerMore" class="relative shrink-0">
+                  <button id="composerMoreBtn" type="button"
+                    class="h-11 w-11 md:h-8 md:w-8 rounded-full text-[var(--text-dim)] hover:bg-white/5 hover:text-[var(--text)] transition-colors mobile-tap-target"
+                    aria-haspopup="menu" aria-expanded="false" title="More message tools" aria-label="More message tools">
+                    <i data-lucide="plus" class="vc-more-plus w-[18px] h-[18px] mx-auto"></i>
+                    <i data-lucide="ellipsis" class="vc-more-dots w-[18px] h-[18px] mx-auto"></i>
+                  </button>
+                  <div id="composerMoreMenu" class="composer-menu" role="menu" hidden>
+                    <div class="composer-menu-section-label" role="presentation">Message</div>
+                    <button type="button" role="menuitem" class="composer-menu-item" data-more-act="attachBtn"><i data-lucide="paperclip" class="w-4 h-4"></i><span>Attach files</span></button>
+                    <button type="button" role="menuitem" class="composer-menu-item" data-more-act="micBtn"><i data-lucide="mic" class="w-4 h-4"></i><span>Dictate</span></button>
+                    <div data-vc-menu-mount role="presentation"></div>
+                    <button type="button" role="menuitem" class="composer-menu-item" data-more-act="voiceSettingsBtn"><i data-lucide="audio-lines" class="w-4 h-4"></i><span>Voice settings</span></button>
+                    <button type="button" role="menuitem" class="composer-menu-item" data-more-act="enhanceBtn"><i data-lucide="sparkles" class="w-4 h-4"></i><span>Enhance prompt</span></button>
+                    <div class="composer-menu-divider" role="separator"></div>
+                    <div class="composer-menu-section-label" role="presentation">Conversation</div>
+                    <button type="button" role="menuitem" id="composerMoreRetryItem" class="composer-menu-item hidden" data-more-act="retryLastBtn"><i data-lucide="refresh-cw" class="w-4 h-4"></i><span>Retry last message</span></button>
+                    <button type="button" role="menuitem" class="composer-menu-item" data-more-act="compactBtn"><i data-lucide="archive" class="w-4 h-4"></i><span>Summarize older context</span></button>
+                    <button type="button" role="menuitem" id="composerMoreBgItem" class="composer-menu-item" data-more-act="bgToggleBtn"><i data-lucide="rocket" class="w-4 h-4"></i><span>Run in background</span></button>
+                  </div>
+                </div>
+              </div>
+              <!-- Hidden proxy: "Report a problem" lives in the side rail (desktop) and
+                   nav drawer (mobile); both forward their tap to this button so the
+                   open/submit handler stays in one place. Not user-visible. -->
+              <button id="supportBtn" type="button" class="hidden" aria-hidden="true" tabindex="-1"></button>
+              <textarea id="msgInput" rows="1" aria-label="Message" placeholder="Message"
+                class="flex-1 max-h-[160px] md:max-h-[200px] min-h-[36px] md:min-h-[32px] resize-none bg-transparent border-none focus:outline-none focus:ring-0 py-1.5 text-base md:text-[15px] placeholder:text-[var(--text-dim)]/60 leading-relaxed"
+                inputmode="text" autocapitalize="sentences"></textarea>
+              <div class="composer-actions flex items-center gap-1 shrink-0 pb-0.5">
+                <button id="stopAllBtn" data-act="stop-all" hidden class="h-11 px-3 md:h-8 md:px-2 rounded-full text-[var(--ember)] bg-[var(--ember)]/10 border border-[var(--ember)]/20 hover:bg-[var(--ember)]/15 active:scale-95 transition-all mobile-tap-target inline-flex items-center justify-center gap-1.5" title="Stop all active responses" aria-label="Stop all active responses">
+                  <i data-lucide="square" class="w-3.5 h-3.5"></i>
+                  <span class="text-[11px] font-mono">Stop all</span>
+                </button>
+                <button id="retryLastBtn" class="hidden h-11 w-11 md:h-8 md:w-8 rounded-full text-[var(--text-dim)] hover:bg-white/5 hover:text-gold active:scale-95 transition-all mobile-tap-target" title="Retry last message with selected agents" aria-label="Retry last message">
+                  <i data-lucide="refresh-cw" class="w-4 h-4 mx-auto"></i>
+                </button>
+                <button id="sendBtn" class="brand-cta h-11 w-11 md:h-8 md:w-8 rounded-full shadow active:scale-95 transition-transform mobile-tap-target" title="Send (Enter · Shift+Enter for newline)" aria-label="Send">
+                  <i data-lucide="send" class="w-4 h-4 mx-auto -ml-[1px]"></i>
+                </button>
+              </div>
+            </div>
+            <p id="composerRecipients" class="hidden md:block text-[10px] px-1 font-mono"><span data-recipients-text style="color:var(--signal)"></span><span style="color:var(--text-dim)"> · Enter to send · Shift+Enter for newline · @mention to route</span></p>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <!-- Desktop inspector -->
+      <aside id="inspectorDesktop" class="inspector-panel desktop-auto-panel compact-persistent-panel w-64 shrink-0 border-l flex-col"></aside>
+    </div>
+
+    <section id="filesWorkspace" class="workspace-surface hidden flex-1 min-h-0 overflow-hidden">
+      <input id="filesUploadInput" type="file" multiple class="hidden" aria-label="Upload files to this chat"
+             accept="image/*,application/pdf,text/*,application/json,application/zip,.docx,.xlsx,.pptx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation">
+      <div class="flex h-full min-w-0 flex-col">
+        <div class="h-12 border-b border-[var(--border)] flex items-center justify-between gap-3 px-3 md:px-5 shrink-0">
+          <div class="min-w-0">
+            <div class="text-xs font-semibold tracking-widest uppercase">Files</div>
+            <div id="filesMeta" class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] truncate">Current chat artifacts</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button data-action="refresh-files" class="h-9 w-9 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" title="Refresh files" aria-label="Refresh files">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+            <button data-action="export-chat" data-format="md" class="h-9 w-9 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" title="Export chat as Markdown" aria-label="Export chat as Markdown">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+            </button>
+            <button data-action="export-chat" data-format="json" class="h-9 w-9 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" title="Export chat as JSON" aria-label="Export chat as JSON">
+              <i data-lucide="braces" class="w-4 h-4"></i>
+            </button>
+            <button data-action="export-chat" data-format="zip" class="h-9 w-9 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" title="Export chat with files as ZIP" aria-label="Export chat with files as ZIP">
+              <i data-lucide="package" class="w-4 h-4"></i>
+            </button>
+            <button data-action="save-skill" class="h-9 w-9 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" title="Save this chat as a reusable skill" aria-label="Save this chat as a reusable skill">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+            </button>
+            <button data-action="new-file-note" class="h-9 px-3 rounded-md inline-flex items-center gap-2 border border-[var(--border)] text-[var(--text)] hover:bg-white/5" title="Write a note and save it in this chat">
+              <i data-lucide="notebook-pen" class="w-4 h-4"></i><span class="hidden sm:inline text-sm font-medium">New note</span>
+            </button>
+            <button data-action="upload-file-tab" class="h-9 px-3 rounded-md inline-flex items-center gap-2 bg-gold/10 text-gold border border-gold/25 hover:bg-gold/15" title="Upload to this chat">
+              <i data-lucide="upload" class="w-4 h-4"></i><span class="hidden sm:inline text-sm font-medium">Upload</span>
+            </button>
+          </div>
+        </div>
+        <div class="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)]">
+          <div class="border-b lg:border-b-0 lg:border-r border-[var(--border)] min-h-[220px] lg:min-h-0 flex flex-col">
+            <div class="p-3 border-b border-[var(--border)]">
+              <div class="relative">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-dim)]"></i>
+                <input id="filesSearch" type="search" aria-label="Search files" placeholder="Search files..." class="w-full pl-8 h-10 rounded-md bg-[var(--bg-elev)]/60 border border-[var(--border)] focus:ring-1 focus:ring-gold/40 focus:outline-none text-sm" />
+              </div>
+            </div>
+            <div id="filesList" class="flex-1 overflow-y-auto p-2"></div>
+          </div>
+          <div id="filePreview" class="min-h-0 overflow-y-auto"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="projectsWorkspace" class="workspace-surface hidden flex-1 min-h-0 overflow-hidden">
+      <div class="flex h-full min-w-0 flex-col">
+        <div class="h-12 border-b border-[var(--border)] flex items-center justify-between gap-3 px-3 md:px-5 shrink-0">
+          <div class="min-w-0">
+            <div class="text-xs font-semibold tracking-widest uppercase">Projects &amp; coding</div>
+            <div id="projectsMeta" class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] truncate">The same projects shown in your left sidebar</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button data-action="refresh-projects" class="h-9 w-9 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" title="Refresh projects" aria-label="Refresh projects">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+        <div id="projectsView" class="flex-1 min-h-0 overflow-y-auto p-3 md:p-5"></div>
+      </div>
+    </section>
+
+    <section id="calendarWorkspace" class="workspace-surface hidden flex-1 min-h-0 overflow-hidden">
+      <div class="flex h-full min-w-0 flex-col">
+        <div class="h-12 border-b border-[var(--border)] flex items-center justify-between gap-3 px-3 md:px-5 shrink-0">
+          <div class="min-w-0">
+            <div class="text-xs font-semibold tracking-widest uppercase">Calendar</div>
+            <div id="calendarMeta" class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] truncate">Your upcoming schedule</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button data-action="refresh-calendar" class="h-9 w-9 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" title="Refresh calendar" aria-label="Refresh calendar">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+        <div id="calendarView" class="flex-1 min-h-0 overflow-y-auto p-3 md:p-5"></div>
+      </div>
+    </section>
+
+    <section id="settingsWorkspace" class="workspace-surface hidden flex-1 min-h-0 overflow-hidden">
+      <div class="flex h-full min-w-0 flex-col">
+        <div class="h-12 border-b border-[var(--border)] flex items-center justify-between gap-3 px-3 md:px-5 shrink-0">
+          <div class="min-w-0">
+            <div class="text-xs font-semibold tracking-widest uppercase">Settings</div>
+            <div id="settingsMeta" class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] truncate">Profile, private mobile access, users &amp; security</div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button data-action="download-backup" class="h-9 px-3 rounded-md inline-flex items-center gap-2 bg-gold/10 text-gold border border-gold/25 hover:bg-gold/15" title="Download full backup">
+              <i data-lucide="hard-drive-download" class="w-4 h-4"></i><span class="hidden sm:inline text-sm font-medium">Backup</span>
+            </button>
+            <button data-action="refresh-settings" class="h-9 w-9 rounded-md inline-flex items-center justify-center text-[var(--text-dim)] hover:text-[var(--text)] hover:bg-white/5" title="Refresh" aria-label="Refresh settings">
+              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-3 md:p-5">
+          <div class="page-col grid gap-5 min-w-0">
+            <section id="settingsSimpleMode" class="min-w-0">
+              <div class="flex items-center gap-2 mb-2 px-0.5">
+                <i data-lucide="sparkle" class="w-4 h-4 text-[var(--text-dim)] shrink-0"></i>
+                <h2 class="text-sm font-semibold">Simple Mode &amp; Today</h2>
+              </div>
+              <div class="audit-card rounded-lg border p-4 grid gap-4 min-w-0">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div class="min-w-0 flex-1">
+                    <div class="text-base font-semibold">Show Today above conversations</div>
+                    <p class="mt-1 text-xs leading-relaxed text-[var(--text-dim)]">A compact premium glance at what needs you, what is running, recent updates, and the next 48 hours. It stays off until you choose it on this device.</p>
+                  </div>
+                  <label class="min-h-11 inline-flex items-center gap-3 cursor-pointer select-none">
+                    <input id="todayBandToggle" type="checkbox" class="h-5 w-5 accent-gold" />
+                    <span class="text-sm font-medium">Show Today</span>
+                  </label>
+                </div>
+                <!-- SIMPLE MODE HELD — the "Open Simple Mode" CTA is withdrawn until the
+                     rebuild ships (simple-ui/REBUILD_SPEC.md). -->
+
+              </div>
+            </section>
+            <section id="settingsIdleLock" class="min-w-0">
+              <div class="flex items-center gap-2 mb-2 px-0.5">
+                <i data-lucide="lock" class="w-4 h-4 text-[var(--text-dim)] shrink-0"></i>
+                <h2 class="text-sm font-semibold">Session lock</h2>
+              </div>
+              <div class="audit-card rounded-lg border p-4 grid gap-4 min-w-0">
+                <div class="min-w-0">
+                  <div class="text-base font-semibold">Lock the screen after idle time</div>
+                  <p class="mt-1 text-xs leading-relaxed text-[var(--text-dim)]">After this many minutes with no input, the screen asks for your password. Agents and streams keep going. A visible tab with an agent in flight counts as you being here. 0 turns the lock off. The 30 day session cap still applies.</p>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+                  <label class="min-w-0 flex-1 grid gap-1.5">
+                    <span class="text-[11px] font-mono uppercase tracking-wider text-[var(--text-dim)]">Minutes</span>
+                    <input id="idleTimeoutInput" type="number" min="0" max="1440" step="1" class="brand-input rounded-md border px-3 text-sm" style="height:2.5rem" />
+                  </label>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" data-idle-preset="30" class="h-10 px-3 rounded-md border border-[var(--border)] text-xs">30 min</button>
+                    <button type="button" data-idle-preset="240" class="h-10 px-3 rounded-md border border-[var(--border)] text-xs">4 hours</button>
+                    <button type="button" data-idle-preset="0" class="h-10 px-3 rounded-md border border-[var(--border)] text-xs">Off</button>
+                    <button type="button" id="idleTimeoutSave" class="brand-cta h-10 px-4 rounded-md text-sm font-semibold">Save</button>
+                  </div>
+                </div>
+                <div id="idleTimeoutHint" class="text-xs text-[var(--text-dim)]"></div>
+              </div>
+            </section>
+            <!-- Your profile (everyone) — durable, agent-wide context -->
+            <section id="settingsProfile" class="min-w-0"></section>
+            <!-- Private Tailscale Serve access (admin-managed) -->
+            <section id="settingsMobileAccess" class="min-w-0"></section>
+            <!-- Users & agent access (admin-managed) -->
+            <section id="settingsUsers" class="min-w-0"></section>
+            <!-- Telegram bridge (admin-managed) -->
+            <section id="settingsTelegram" class="min-w-0"></section>
+            <!-- Web search (Tavily) integration key (admin-managed) -->
+            <section id="settingsTavily" class="min-w-0"></section>
+            <!-- Local Crawl4AI renderer (admin-managed, available to every agent) -->
+            <section id="settingsCrawl4AI" class="min-w-0"></section>
+            <!-- OpenRouter provider agent (admin-managed, API key stays write-only) -->
+            <section id="settingsOpenRouter" class="min-w-0"></section>
+            <!-- Voice providers (ElevenLabs / Google / local) (admin-managed) -->
+            <section id="settingsVoice" class="min-w-0"></section>
+            <!-- Calendar (Google secret ICS link) (admin-managed) -->
+            <section id="settingsCalendar" class="min-w-0"></section>
+            <!-- Screen recorder Chrome extension (everyone) -->
+            <section id="settingsRecorder" class="min-w-0">
+              <div class="flex items-center gap-2 mb-2 px-0.5">
+                <i data-lucide="video" class="w-4 h-4 text-[var(--text-dim)] shrink-0"></i>
+                <h2 class="text-sm font-semibold">Screen recorder</h2>
+              </div>
+              <div class="audit-card rounded-lg border p-4 grid gap-4 min-w-0">
+                <div>
+                  <div class="text-base font-semibold">Record your screen straight into a chat.</div>
+                  <p class="mt-1 text-xs leading-relaxed text-[var(--text-dim)]">A small Chrome extension records your screen (with optional mic narration) as a compact video and sends it to any conversation here — by default a "📹 Recordings" inbox it creates for you. It reuses your existing login; nothing else to configure.</p>
+                </div>
+                <div class="grid sm:grid-cols-2 gap-2">
+                  <div class="rounded-lg border border-[var(--border)] p-3 flex gap-3 min-w-0"><span class="h-7 w-7 rounded-full bg-gold/10 text-gold border border-gold/20 inline-flex items-center justify-center font-mono text-xs shrink-0">1</span><span class="min-w-0"><strong class="block text-sm">Download &amp; unzip</strong><span class="block mt-0.5 text-xs leading-relaxed text-[var(--text-dim)] break-words">Use the button below, then unzip it somewhere it can stay — Chrome loads the extension from that folder.</span></span></div>
+                  <div class="rounded-lg border border-[var(--border)] p-3 flex gap-3 min-w-0"><span class="h-7 w-7 rounded-full bg-gold/10 text-gold border border-gold/20 inline-flex items-center justify-center font-mono text-xs shrink-0">2</span><span class="min-w-0"><strong class="block text-sm">Open Chrome's extensions page</strong><span class="block mt-0.5 text-xs leading-relaxed text-[var(--text-dim)] break-words">Copy <span class="font-mono">chrome://extensions</span> below, paste it into Chrome's address bar, and switch on <strong>Developer mode</strong> (top right).</span></span></div>
+                  <div class="rounded-lg border border-[var(--border)] p-3 flex gap-3 min-w-0"><span class="h-7 w-7 rounded-full bg-gold/10 text-gold border border-gold/20 inline-flex items-center justify-center font-mono text-xs shrink-0">3</span><span class="min-w-0"><strong class="block text-sm">Load it</strong><span class="block mt-0.5 text-xs leading-relaxed text-[var(--text-dim)] break-words">Click <strong>Load unpacked</strong> and pick the unzipped <span class="font-mono">screen-recorder</span> folder. Pin it via the puzzle-piece menu so it sits on the toolbar.</span></span></div>
+                  <div class="rounded-lg border border-[var(--border)] p-3 flex gap-3 min-w-0"><span class="h-7 w-7 rounded-full bg-gold/10 text-gold border border-gold/20 inline-flex items-center justify-center font-mono text-xs shrink-0">4</span><span class="min-w-0"><strong class="block text-sm">Record</strong><span class="block mt-0.5 text-xs leading-relaxed text-[var(--text-dim)] break-words">Click the toolbar icon, pick a chat and quality, hit <strong>Start recording</strong>. Stopping uploads it automatically.</span></span></div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <button data-action="download-recorder-ext" class="h-11 px-4 rounded-md brand-cta inline-flex items-center justify-center gap-2 text-sm font-semibold"><i data-lucide="download" class="w-4 h-4"></i>Download extension</button>
+                  <button data-action="copy-ext-page" class="h-11 px-4 rounded-md border border-gold/30 bg-gold/10 text-gold inline-flex items-center justify-center gap-2 text-sm font-medium"><i data-lucide="copy" class="w-4 h-4"></i>Copy chrome://extensions</button>
+                </div>
+                <div class="rounded-lg border border-[var(--border)] p-3 text-xs leading-relaxed text-[var(--text-dim)]">
+                  <strong class="text-[var(--text)]">Good to know:</strong> works in Chrome (and Chromium browsers like Edge/Brave via their own extensions page). Recordings are compact — roughly 4–7 MB per minute. The extension signs in as you, so use it in the same browser profile where you're logged in here.
+                </div>
+              </div>
+            </section>
+            <!-- Security log (collapsible) -->
+            <section class="min-w-0">
+              <button data-action="toggle-audit" aria-expanded="false" class="w-full flex items-center justify-between gap-3 mb-2 px-0.5 text-left">
+                <div class="flex items-center gap-2 min-w-0">
+                  <i data-lucide="shield-check" class="w-4 h-4 text-[var(--text-dim)] shrink-0"></i>
+                  <h2 class="text-sm font-semibold">Security log</h2>
+                  <span id="auditMeta" class="text-[10px] font-mono uppercase tracking-wider text-[var(--text-dim)] truncate"></span>
+                </div>
+                <i data-lucide="chevron-down" id="auditChevron" class="w-4 h-4 text-[var(--text-dim)] shrink-0 transition-transform"></i>
+              </button>
+              <div id="auditPanel" class="hidden">
+                <div class="text-[11px] text-[var(--text-dim)] mb-2 px-0.5">Kept for 15 days, then archived to backup automatically.</div>
+                <div id="auditList"></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script defer src="/static/login-boot.js?v={{ page_public_config.get('login_boot_version', page_public_config.get('app_version', '')) }}"></script>
+
+
+<div id="canvasScrim" data-act="close-canvas" aria-hidden="true"></div>
+<!-- Canvas panel: renders agent-generated visual artifacts in a sandboxed surface -->
+<aside id="canvasPanel" class="canvas-hidden" aria-label="Visual canvas" aria-hidden="true" inert>
+  <div id="canvasResizer" class="canvas-resizer" role="separator" aria-orientation="vertical"
+       aria-label="Resize canvas (drag or arrow keys; double-click resets)" tabindex="0"
+       title="Drag to resize · double-click to reset"></div>
+  <div class="canvas-head">
+    <button type="button" class="canvas-icon-btn canvas-nav canvas-artifact-tool" data-act="canvas-prev" title="Previous (←)" aria-label="Previous artifact"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+    <button type="button" class="canvas-icon-btn canvas-nav canvas-artifact-tool" data-act="canvas-next" title="Next (→)" aria-label="Next artifact"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+    <span id="canvasAgentDot" class="canvas-agent-dot canvas-artifact-tool" style="display:none"></span>
+    <div class="canvas-titles">
+      <h3 id="canvasTitle">Canvas</h3>
+      <p id="canvasMeta"></p>
+    </div>
+    <button type="button" class="canvas-icon-btn canvas-artifact-tool" data-act="open-gallery" title="All visuals in this chat" aria-label="Gallery"><i data-lucide="layout-grid" class="w-4 h-4"></i></button>
+    <button type="button" class="canvas-icon-btn canvas-artifact-tool" data-act="canvas-compare" title="Compare side-by-side" aria-label="Compare"><i data-lucide="git-compare" class="w-4 h-4"></i></button>
+    <div class="canvas-handoff-wrap canvas-artifact-tool">
+      <button type="button" class="canvas-icon-btn" data-act="canvas-handoff-menu" title="Hand off to an agent" aria-label="Hand off to an agent"><i data-lucide="send" class="w-4 h-4"></i></button>
+      <div id="canvasHandoffMenu" class="canvas-menu hidden"></div>
+    </div>
+    <div id="canvasPreviewTools" class="canvas-preview-tools hidden">
+      <button type="button" class="canvas-icon-btn" data-p="inspect" title="Inspect an element" aria-label="Inspect preview" aria-pressed="false"><i data-lucide="scan-search" class="w-4 h-4"></i></button>
+      <button type="button" class="canvas-icon-btn" data-p="report" title="Attach preview errors to the composer" aria-label="Report preview errors"><i data-lucide="bug" class="w-4 h-4"></i></button>
+      <button type="button" class="canvas-icon-btn" data-p="refresh" title="Refresh preview" aria-label="Refresh preview"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+      <button type="button" class="canvas-icon-btn" data-p="stop" title="Stop preview server" aria-label="Stop preview"><i data-lucide="square" class="w-4 h-4"></i></button>
+    </div>
+    <a id="canvasDownload" class="canvas-icon-btn" href="#" target="_blank" rel="noopener" title="Open / download" aria-label="Open or download">
+      <i data-lucide="download" class="w-4 h-4"></i>
+    </a>
+    <button type="button" class="canvas-icon-btn" data-act="close-canvas" title="Close (Esc)" aria-label="Close canvas">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  </div>
+  <div id="canvasArtifactViewToggle" class="canvas-view-strip canvas-artifact-tool" role="group" aria-label="HTML artifact view" hidden>
+    <div class="artifact-view-toggle">
+      <button type="button" data-act="canvas-view-mode" data-mode="preview" aria-pressed="true" class="is-active"><i data-lucide="eye" class="w-3.5 h-3.5"></i><span>Preview</span></button>
+      <button type="button" data-act="canvas-view-mode" data-mode="code" aria-pressed="false"><i data-lucide="code-2" class="w-3.5 h-3.5"></i><span>Code</span></button>
+    </div>
+    <span class="canvas-safe-preview"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i>Sanitized preview</span>
+  </div>
+  <div id="canvasLineage" class="hidden"></div>
+  <div id="canvasBody"></div>
+  <div id="canvasGallery" class="hidden"></div>
+  <div id="canvasSendBar" class="hidden">
+    <div class="canvas-send-text">
+      <span class="canvas-send-label">Canvas wants to send <span id="canvasSendAim" class="canvas-send-aim"></span></span>
+      <span id="canvasSendPreview" class="canvas-send-preview"></span>
+    </div>
+    <div class="canvas-send-actions">
+      <button type="button" class="canvas-send-dismiss" data-act="canvas-send-dismiss">Dismiss</button>
+      <button type="button" class="canvas-send-confirm" data-act="canvas-send-confirm">
+        <i data-lucide="send" class="w-3.5 h-3.5"></i> Send
+      </button>
+    </div>
+  </div>
+</aside>
+</body>
+</html>

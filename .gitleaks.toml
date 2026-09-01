@@ -1,0 +1,13 @@
+title = "Agents Chat Community Edition Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow generated file hashes and one public model identifier that resembles a generic API key."
+paths = [
+  '''(^|/)\.community-release\.json$''',
+]
+regexes = [
+  '''^perplexity/sonar$''',
+]

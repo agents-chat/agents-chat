@@ -1,0 +1,200 @@
+name: Community Edition CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-community:
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Verify release artifact integrity (public release checkouts)
+        run: |
+          if [ -f .community-release.json ]; then
+            python3 scripts/community/verify_release.py --artifact
+          else
+            echo "No release marker; development tree — skipping artifact verification."
+          fi
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.32"
+          python-version: "3.12"
+      - name: Install locked dependencies
+        run: |
+          uv venv --python 3.12 .venv
+          uv pip install --python .venv/bin/python --require-hashes -r requirements.lock
+          uv pip install --python .venv/bin/python --require-hashes -r requirements-dev.lock
+      - name: Install locked frontend dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify release marker and secret gate
+        run: .venv/bin/python scripts/community/verify_release.py --source
+      - name: Validate shell launchers
+        run: |
+          # Every shipped *.sh and *.command, not just the installers: the
+          # bridge launchers under scripts/ are shipped too, and .gitattributes
+          # uses "* -text" so git never normalizes a contributor's line endings.
+          # bash -n catches CRLF corruption as well as syntax errors. Quoted
+          # "$script" keeps the spaces in the *.command names intact.
+          status=0
+          while IFS= read -r script; do
+            bash -n "$script" || { echo "Shell syntax check failed: $script"; status=1; break; }
+          done < <(find . -type d \( -name .git -o -name .venv -o -name node_modules \) -prune \
+            -o -type f \( -name '*.sh' -o -name '*.command' \) -print)
+          exit $status
+      - name: Run Community Edition tests
+        run: .venv/bin/python -m pytest -q tests/test_community_config.py tests/test_community_agent_setup.py tests/test_community_runtime_tools.py tests/test_public_release_contract.py
+      - name: Run frontend behavior tests
+        run: npm test
+      - name: Enforce the public release contract
+        run: |
+          # tests/test_public_release_contract.py skips itself unless it sits in a
+          # tree carrying .community-release.json, so the step above proves nothing
+          # on its own. AGENT_CHAT_REQUIRE_RELEASE_CONTRACT=1 turns that skip into a
+          # hard failure. A public release checkout already has the marker; a
+          # development checkout still has the release builder, so build a tree and
+          # run the contract inside it. One of the two always applies.
+          set -euo pipefail
+          if [ -f .community-release.json ]; then
+            AGENT_CHAT_REQUIRE_RELEASE_CONTRACT=1 \
+              .venv/bin/python -m pytest -q tests/test_public_release_contract.py
+          elif [ -f scripts/community/build_release.py ]; then
+            tree="$(mktemp -d)/release"
+            .venv/bin/python scripts/community/build_release.py --output "$tree"
+            ( cd "$tree" && AGENT_CHAT_REQUIRE_RELEASE_CONTRACT=1 \
+              "$GITHUB_WORKSPACE/.venv/bin/python" -m pytest -q tests/test_public_release_contract.py )
+          else
+            echo "::error::No release marker and no release builder; the public release contract cannot be proven."
+            exit 1
+          fi
+      - name: Validate installer preflight
+        run: |
+          # The installer refuses to run anywhere but a cleared release package.
+          # A development checkout has no marker, so it needs the explicit
+          # dev-preflight opt-in -- which the installer only honours together
+          # with --check-only, and which still refuses to copy anything.
+          set -euo pipefail
+          if [ -f .community-release.json ]; then
+            scripts/community/install_macos.sh --check-only
+          else
+            AGENT_CHAT_ALLOW_DEV_INSTALL=1 scripts/community/install_macos.sh --check-only
+          fi
+
+  windows-community:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Verify release artifact integrity (public release checkouts)
+        shell: pwsh
+        run: |
+          if (Test-Path ".community-release.json") {
+            python scripts\community\verify_release.py --artifact
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } else {
+            Write-Host "No release marker; development tree - skipping artifact verification."
+          }
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          version: "0.11.32"
+          python-version: "3.12"
+      - name: Install locked dependencies
+        shell: pwsh
+        run: |
+          uv venv --python 3.12 .venv
+          uv pip install --python .venv\Scripts\python.exe --require-hashes -r requirements.lock
+          uv pip install --python .venv\Scripts\python.exe --require-hashes -r requirements-dev.lock
+      - name: Verify release marker and secret gate
+        run: .venv\Scripts\python.exe scripts\community\verify_release.py --source
+      - name: Parse PowerShell release tools
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem scripts/community/*.ps1 | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $failed = $true
+              $errors | ForEach-Object { Write-Error ("{0}: {1}" -f $_.Extent.File, $_.Message) }
+            }
+          }
+          if ($failed) { exit 1 }
+      - name: Run Community Edition tests
+        run: .venv\Scripts\python.exe -m pytest -q tests/test_community_config.py tests/test_community_agent_setup.py tests/test_community_runtime_tools.py tests/test_public_release_contract.py
+      - name: Enforce the public release contract
+        shell: pwsh
+        run: |
+          if (Test-Path ".community-release.json") {
+            $env:AGENT_CHAT_REQUIRE_RELEASE_CONTRACT = "1"
+            .venv\Scripts\python.exe -m pytest -q tests/test_public_release_contract.py
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } else {
+            Write-Host "No release marker; the macOS job builds a release tree and enforces the contract there."
+          }
+      - name: Validate installer preflight
+        shell: pwsh
+        run: |
+          # Same rule as macOS: without a release marker the installer needs the
+          # dev-preflight opt-in, which it honours only alongside -CheckOnly and
+          # which never copies anything.
+          if (-not (Test-Path ".community-release.json")) {
+            $env:AGENT_CHAT_ALLOW_DEV_INSTALL = "1"
+          }
+          .\scripts\community\install_windows.ps1 -CheckOnly
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & '.\Install Agents Chat on Windows.cmd' --check-only
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  secret-scan:
+    # The release ships .gitleaks.toml, so CI has to actually run gitleaks against
+    # it. Linux only: gitleaks is installed from a pinned, checksum-verified
+    # release archive rather than a third-party action, and the Linux build is the
+    # one this job needs.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GITLEAKS_VERSION: "8.30.1"
+      GITLEAKS_LINUX_X64_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Install gitleaks
+        run: |
+          set -euo pipefail
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl --fail --silent --show-error --location --retry 3 --output "$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          printf '%s  %s\n' "$GITLEAKS_LINUX_X64_SHA256" "$archive" | sha256sum --check --strict -
+          tar -xzf "$archive" gitleaks
+          sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+          rm -f "$archive" gitleaks
+          gitleaks version
+      - name: Scan for secrets with the shipped configuration
+        run: |
+          # A public release checkout has .gitleaks.toml at the root; a development
+          # checkout still has the file it is built from. Never silently skip.
+          set -euo pipefail
+          if [ -f .gitleaks.toml ]; then
+            config=.gitleaks.toml
+          elif [ -f community/gitleaks.public.toml ]; then
+            config=community/gitleaks.public.toml
+          else
+            echo "::error::No gitleaks configuration found; secret scanning cannot be skipped."
+            exit 1
+          fi
+          # --config replaces the built-in ruleset outright, so a configuration
+          # that neither extends the default nor declares rules would scan with an
+          # empty ruleset and pass every time. Refuse to report that as a clean run.
+          if ! grep -Eq '^[[:space:]]*useDefault[[:space:]]*=[[:space:]]*true' "$config" \
+             && ! grep -q '^\[\[rules\]\]' "$config"; then
+            echo "::error::$config declares no [[rules]] and does not set useDefault = true under [extend], so gitleaks would scan with an empty ruleset and always pass."
+            exit 1
+          fi
+          echo "Scanning with $config"
+          gitleaks dir . --config "$config" --no-banner --redact=100 --verbose --exit-code 1

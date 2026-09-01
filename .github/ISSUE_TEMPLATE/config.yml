@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup help, questions, and ideas
+    url: https://github.com/agents-chat/agents-chat/discussions
+    about: Ask for help, suggest an idea, or share what you built.
+  - name: Security vulnerability
+    url: https://github.com/agents-chat/agents-chat/security/advisories/new
+    about: Report security issues privately. Do not open a public issue.

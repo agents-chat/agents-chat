@@ -1,0 +1,43 @@
+# Secrets and local configuration
+.env
+.env.*
+*.env
+!config.community.env
+!*/.env.example
+agents/
+
+# Mutable runtime data
+data/
+episodes/
+threads/
+attachments/
+artifacts_store/
+storage_backups/
+support_tickets/
+voice_cache/
+push_state/
+*_bridge/
+*.pem
+*.key
+*.p12
+*.pfx
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+sessions.json
+chats_index.json
+workspace_bindings.json
+custom_agents.json
+calendars.json
+
+# Local tooling, dependencies, and generated files
+.venv/
+node_modules/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.bak
+*.bak.*
+*.sqlite3.bak*
+.DS_Store
+scripts/macos_ocr
