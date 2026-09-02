@@ -1,0 +1,17 @@
+/* Self-hosted variable fonts (OFL). Fraunces = display voice (clock, answers,
+   questions). Geist = UI voice (everything else). Both latin-subset, ~97KB total. */
+@font-face {
+  font-family: "Fraunces";
+  src: url("/static/fonts/fraunces-latin-0.woff2") format("woff2");
+  font-weight: 300 700;
+  font-stretch: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Geist";
+  src: url("/static/fonts/geist-latin-0.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}

@@ -1,0 +1,10 @@
+# Line endings are release-managed by the builder, not by git: it rewrites the
+# Windows launchers (*.cmd, *.ps1) to CRLF in every release artifact -- macOS
+# and Windows alike -- and leaves everything else, including *.sh and
+# *.command, as LF. Disabling git text conversion keeps checkouts on every
+# platform byte-identical to what shipped, so those CRLF launchers stay CRLF,
+# the LF shell scripts stay LF, and the signed release marker
+# (.community-release.json) keeps verifying.
+* -text
+*.cmd whitespace=cr-at-eol
+*.ps1 whitespace=cr-at-eol

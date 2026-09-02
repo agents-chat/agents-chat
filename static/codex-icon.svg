@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Codex">
+  <defs>
+    <linearGradient id="bg" x1="12" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10a37f"/>
+      <stop offset="1" stop-color="#0b6f5b"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="18" y1="16" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#eafff8"/>
+      <stop offset="1" stop-color="#8ff2d2"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="#071311"/>
+  <path d="M32 6.5 54.1 19v25.5L32 57.5 9.9 44.5V19L32 6.5Z" fill="url(#bg)"/>
+  <path d="M32 13.5 47.8 22v18L32 49.5 16.2 40V22L32 13.5Z" fill="none" stroke="url(#edge)" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M26.5 24 19 32l7.5 8M37.5 24 45 32l-7.5 8" fill="none" stroke="#f7fffc" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m35 21-6 22" fill="none" stroke="#d7fff2" stroke-width="3.5" stroke-linecap="round"/>
+</svg>
