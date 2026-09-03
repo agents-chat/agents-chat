@@ -5,7 +5,7 @@
     "start": "node scripts/community/npm_start.mjs",
     "setup": "node scripts/community/npm_setup.mjs",
     "test": "node --test tests/*.mjs",
-    "typecheck": "pyright crawl4ai_client.py scripts/perplexity_agent_bridge.py coding_jobs.py community_config.py"
+    "typecheck": "pyright crawl4ai_client.py coding_jobs.py community_config.py"
   },
   "devDependencies": {
     "pyright": "^1.1.413",
