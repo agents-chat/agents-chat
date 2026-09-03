@@ -18,13 +18,33 @@ from first sign-in through a verified project and its completion receipt.
 
 ## Downloads
 
-- [macOS beta ZIP](https://github.com/agents-chat/agents-chat/releases/latest/download/agent-chat-community-macos-0.1.0-beta.3.zip)
-  ([SHA-256](https://github.com/agents-chat/agents-chat/releases/latest/download/agent-chat-community-macos-0.1.0-beta.3.zip.sha256))
-- [Windows beta ZIP](https://github.com/agents-chat/agents-chat/releases/latest/download/agent-chat-community-windows-0.1.0-beta.3.zip)
-  ([SHA-256](https://github.com/agents-chat/agents-chat/releases/latest/download/agent-chat-community-windows-0.1.0-beta.3.zip.sha256))
+- [macOS beta ZIP](https://github.com/agents-chat/agents-chat/releases/download/v0.1.0-beta.3/agent-chat-community-macos-0.1.0-beta.3.zip)
+  ([SHA-256](https://github.com/agents-chat/agents-chat/releases/download/v0.1.0-beta.3/agent-chat-community-macos-0.1.0-beta.3.zip.sha256))
+- [Windows beta ZIP](https://github.com/agents-chat/agents-chat/releases/download/v0.1.0-beta.3/agent-chat-community-windows-0.1.0-beta.3.zip)
+  ([SHA-256](https://github.com/agents-chat/agents-chat/releases/download/v0.1.0-beta.3/agent-chat-community-windows-0.1.0-beta.3.zip.sha256))
 
-These links become active with the beta GitHub Release. Verify the downloaded
-ZIP against its adjacent checksum before installing.
+The two downloads are intentionally byte-for-byte identical universal source
+bundles. Each contains both platform installers; the separate filenames make
+the correct starting installer clear. They are not different native binaries.
+
+### Verify the download
+
+Keep the ZIP and its `.sha256` file in the same folder. On macOS, run:
+
+```bash
+shasum -a 256 -c agent-chat-community-macos-0.1.0-beta.3.zip.sha256
+```
+
+On Windows, open PowerShell in the download folder and run:
+
+```powershell
+$expected = (Get-Content .\agent-chat-community-windows-0.1.0-beta.3.zip.sha256).Split()[0].ToLower()
+$actual = (Get-FileHash .\agent-chat-community-windows-0.1.0-beta.3.zip -Algorithm SHA256).Hash.ToLower()
+if ($actual -ne $expected) { throw "Checksum mismatch: do not install this download." }
+"Checksum OK: $actual"
+```
+
+Only continue when macOS reports `OK` or Windows reports `Checksum OK`.
 
 ## Install on macOS
 
